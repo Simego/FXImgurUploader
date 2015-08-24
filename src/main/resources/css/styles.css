@@ -1,0 +1,374 @@
+/* Colors */
+* {
+    -imgur-color-bg-1: #121211;
+    -imgur-color-bg-2: #2b2b2b;
+    -imgur-color-hover: #444442;
+    -imgur-default-green: rgb(133, 191, 37);
+    /*-imgur-default-green-opacity: rgba(133, 191, 37, 0.5);*/
+    -imgur-default-text-color: rgb(242, 242, 242);
+    -imgur-default-blue: #3274e5;
+    -toolbar-color-2: #404040;
+    -imgur-focus-border-gold: #665d32;
+    -fx-font-family: "Arial, sans-serif";
+}
+
+.root {
+    -fx-focus-color: transparent;
+    -fx-border-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.tooltip {
+    -fx-background-color: rgb(50, 50, 50);
+    -fx-background-radius: 5px;
+    -fx-text-fill: -imgur-default-green;
+    -fx-font-weight: bold;
+    -fx-effect: dropshadow(gaussian, -imgur-default-green, 6, 0.1, 0, 0)
+}
+.tooltip GridPane Label {
+    -fx-text-fill: -imgur-default-green;
+    -fx-font-weight: bold;
+}
+
+.tooltip Label {
+    -fx-text-fill: -imgur-default-green;
+    -fx-font-weight: bold;
+}
+
+.main-borderpane {
+    -fx-background-color: -imgur-color-bg-1;
+    -fx-background-radius: 10;
+}
+.center-pane {
+    -fx-padding: 20px;
+    -fx-spacing: 10px;
+    -fx-background-insets: 8px;
+    -fx-background-color: -imgur-color-bg-2;
+    -fx-background-radius: 10px;
+}
+.upper-center-pane {
+    -fx-spacing: 10px;
+}
+
+/* == TOOLBAR == */
+.toolbar-custom-pane {
+    /*-fx-alignment: center;*/
+    -fx-background-color: -imgur-color-bg-2;
+    /*-fx-background-insets: 14 10 13 10;*/
+    /*-fx-background-insets: 0 0 10 0;*/
+    -fx-background-radius: 10 10 0 0;
+    -fx-padding: 0;
+    /*-fx-max-height: 50;*/
+    -fx-pref-height: 60;
+    -fx-min-height: 60;
+}
+.toolbar-custom-pane ToolBar {
+    /*-fx-alignment: center;*/
+    -fx-background-color: transparent;
+    -fx-spacing: 2;
+    /*-fx-max-height: 50;*/
+    -fx-pref-height: 60;
+    -fx-min-height: 60;
+}
+
+/* DEFAULT GREEN BUTTON (imgur-like) */
+.default-green-button {
+    -fx-cursor: hand;
+}
+.default-green-button Text {
+    -fx-fill: -imgur-default-green;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 4, 0.0, 0, 0);
+}
+.default-green-button:hover Text {
+    -fx-fill: derive(-imgur-default-green, -20%);
+}
+.default-green-button:armed Text {
+    -fx-effect: dropshadow(gaussian, derive(-imgur-default-green, -40%), 4, 0.5, 0, 0) !important;
+}
+
+
+/* TOOLBAR BUTTONS */
+.toolbar-button-transparent {
+    -fx-cursor: hand;
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    /*-fx-max-height: 50;*/
+    -fx-pref-height: 60;
+    -fx-min-height: 60;
+    -fx-text-fill: -imgur-default-text-color;
+    -fx-text-alignment: center;
+    -fx-font-size: 16px;
+    -fx-padding: 0 15 0 15;
+}
+.toolbar-button-transparent .text {
+    -fx-fill: -imgur-default-text-color;
+}
+.toolbar-button-transparent:hover .text {
+    /*-fx-fill: -imgur-default-green;*/
+}
+.toolbar-button-transparent:hover {
+    -fx-background-color: -imgur-color-hover;
+}
+.toolbar-button-transparent Text {
+    -fx-alignment: center;
+}
+/*.toolbar-button-transparent:armed Text {
+    -fx-effect: innershadow( gaussian, rgba( 0, 0, 0, 0.5 ), 10, 0.5, 0, 0 );
+}*/
+/* START */
+.toolbar-button-transparent.start Text {
+    -fx-fill: rgb(0,160,0);
+}
+.toolbar-button-transparent.start:hover Text {
+    -fx-fill: radial-gradient(center 50% 50%, radius 80%, rgb(0,204,0), rgb(0,160,0));
+}
+.toolbar-button-transparent.start:armed Text {
+    -fx-effect: dropshadow(gaussian, rgba(0,160,0,0.5), 5, 0.5, 0, 0) !important;
+}
+/* STOP */
+.toolbar-button-transparent.stop Text {
+    -fx-fill: rgb(204,0,0);
+}
+.toolbar-button-transparent.stop:hover Text {
+    -fx-fill: radial-gradient(center 50% 50%, radius 80%, rgb(255,0,0), rgb(204,0,0));
+}
+.toolbar-button-transparent.stop:armed Text {
+    -fx-effect: dropshadow(gaussian, rgba(204,0,0,0.8), 5, 0.5, 0, 0) !important;
+}
+
+
+
+/* TABLE VIEW */
+.table-view {
+    -fx-base: -imgur-color-bg-2;
+    -fx-control-inner-background: -imgur-color-bg-2;
+    /*-fx-background-color: -imgur-color-bg-1;*/
+    -fx-table-cell-border-color: derive(-fx-control-inner-background, 20%);
+    -fx-table-cell-border-color: transparent;
+    -fx-table-header-border-color: transparent;
+}
+
+/* Column Header Label */
+.table-view .column-header .label {
+    -fx-text-fill: -imgur-default-text-color;
+}
+
+.table-view .column-header {
+    /*-fx-border-color: #f00 #0f0 #00f #f0f;*/
+}
+.table-view .column-header-background {
+    /*-fx-background-color: linear-gradient(to top, -imgur-color-bg-2, derive(-imgur-color-bg-2, 20%));*/
+}
+
+/* Odd Row */
+.table-row-cell:odd {
+    -fx-background-color: -fx-table-cell-border-color, derive(-fx-control-inner-background, -40%);
+    /*-fx-background-insets: 0, 0 0 1 0;*/
+}
+
+
+/* Selected row */
+/*.table-view:focused .table-row-cell:filled:focused:selected {
+    -fx-background-color: brown;
+    -fx-background-insets: 0, 1, 2;
+    -fx-background: -fx-accent;
+    -fx-text-fill: -fx-selection-bar-text;
+}*/
+
+/* Selected row */
+.table-view:focused .table-row-cell:filled:focused:selected,
+/* Selected row when table not focused */
+.table-row-cell:filled:focused:selected {
+    -fx-background-color: linear-gradient(to bottom, derive(-imgur-default-blue, -10%) 0, derive(-imgur-default-blue, -30%) 100%)
+        /*-fx-background-insets: 0, 1, 2;*/
+        /*-fx-background: -fx-accent;*/
+        /*-fx-text-fill: -fx-selection-bar-text;*/
+}
+
+/* Row hovered */
+.table-view:row-selection .table-row-cell:filled:hover {
+    -fx-background-color: linear-gradient(to bottom, derive(-imgur-default-green, -10%) 0, derive(-imgur-default-green, -30%) 100%);
+    /*-fx-background-insets: 0, 0 0 1 0;*/
+    /*-fx-text-fill: -fx-text-inner-color;*/
+}
+
+/* Selected row hovered */
+/*.table-view:focused .table-row-cell:filled:focused:selected:hover {
+    -fx-background: -fx-accent;
+    -fx-background-color: yellow;
+    -fx-background-insets: 0, 1, 2;
+    -fx-text-fill: -fx-selection-bar-text;
+}*/
+
+/* Selected row hovered when table not focused */
+.table-view:row-selection .table-row-cell:filled:focused:hover {
+    -fx-background-color: linear-gradient(to bottom, derive(-imgur-default-blue, 40%) 0, derive(-imgur-default-blue, 20%) 100%)
+        /*-fx-background-insets: 0, 0 0 1 0, 1 1 2 1, 2 2 3 2, 3 3 4 3;*/
+        /*-fx-text-fill: -fx-text-inner-color;*/
+}
+
+
+
+/* ====================
+     CUSTOM COMPONENTS
+   ==================== */
+
+/* TEXT AREA */
+.text-area {
+    -fx-base: -imgur-color-bg-2;
+    -fx-border-width: 1px;
+    -fx-border-style: solid;
+    -fx-border-radius: 5px;
+    -fx-border-color: #171717 transparent #333 transparent;
+    -fx-background-color: #1c1c1c;
+    -fx-background-radius: 5px;
+    -fx-text-fill: -imgur-default-text-color;
+}
+.text-area:focused {
+    -fx-border-color: -imgur-focus-border-gold;
+}
+/*.text-area .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.text-area .scroll-pane .viewport{
+    -fx-background-color: transparent;
+}
+.text-area .scroll-pane .content{
+    -fx-background-color: transparent;
+}*/
+
+
+/* TEXT FIELD */
+.text-field {
+    -fx-border-width: 1px;
+    -fx-border-style: solid;
+    -fx-border-radius: 5px;
+    -fx-border-color: #171717 transparent #333 transparent;
+    -fx-background-color: #1c1c1c;
+    -fx-background-radius: 5px;
+    -fx-text-fill: -imgur-default-text-color;
+    -fx-padding: 1 2 1 2;
+}
+.text-field:focused {
+    -fx-border-color: derive(-imgur-focus-border-gold, 20%);
+}
+.table-row-cell .text-field {
+    -fx-min-height: 18px;
+    -fx-pref-height: 18px;
+    -fx-max-height: 18px;
+    -fx-font-size: 11px;
+}
+
+
+
+
+/* DROP SHADOWS */
+.dropshadow-1-5 Text {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 4, 0.0, 1.5, 1.5);
+}
+.dropshadow Text {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 4, 0.0, 0, 0);
+}
+
+
+/* POPUP */
+.popup-menu-user {
+    -fx-background-color: -imgur-default-text-color;
+}
+
+/* CONTEXT MENU */
+.context-menu-user {
+    -fx-border-color: -imgur-default-green;
+    -fx-border-width: 3 0 0 0;
+}
+.context-menu {
+    /*-fx-skin: "com.sun.javafx.scene.control.skin.ContextMenuSkin";*/
+    -fx-background-color: derive(-imgur-default-text-color, 20%);
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    /*    -fx-padding: 0.666667em 0.083333em 0.666667em 0.083333em;  8 1 8 1 */
+    -fx-padding: 0; /* 4 1 8 1 */
+}
+
+.context-menu .separator {
+    -fx-padding: 0.0em 0.333333em 0.0em 0.333333em; /* 0 4 0 4 */
+}
+
+.context-menu .menu-item .check-box {
+    -fx-padding: 10;
+    -fx-text-fill: -imgur-color-bg-2;
+}
+
+.context-menu .menu-item:hover .check-box {
+    -fx-background-color: derive(-imgur-default-text-color, -25%);
+}
+
+.context-menu .menu-item {
+    -fx-background-color: transparent;
+    -fx-text-alignment: right;
+    -fx-padding: 0;
+}
+.context-menu .menu-item:focused {
+    -fx-background-color: derive(-imgur-default-text-color, -25%);
+    -fx-cursor: hand;
+}
+.context-menu .menu-item:armed,
+.context-menu .menu-item:active{
+    -fx-background-color: derive(-imgur-default-text-color, -25%);
+}
+.context-menu .menu-item .label {
+    -fx-text-fill: -imgur-color-bg-2;
+    -fx-text-alignment: right;
+    -fx-padding: 10 5 10 5;
+}
+
+
+/* CUSTOM BUTTONS */
+.upload-button {
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-text-fill: -imgur-default-text-color;
+    -fx-background-color: linear-gradient(rgb(50, 116, 229) 0px, rgb(45, 103, 204) 100%);
+    -fx-background-insets: 0;
+    -fx-background-radius: 4;
+    /*-fx-border-width: 1px;*/
+    -fx-border-color: rgb(56, 129, 255) rgb(31, 71, 140) rgb(31, 71, 140) rgba(0, 0, 0, 0) !important;
+    -fx-border-radius: 4;
+    -fx-padding: 3 10 3 10;
+}
+.upload-button .text {
+    -fx-font-weight: 650;
+}
+.upload-button:focused {
+    -fx-focus-color: transparent;
+}
+.upload-button Text {
+    -fx-fill: -imgur-default-text-color;
+}
+.upload-button:armed {
+    -fx-text-fill: derive(-imgur-default-text-color, -80%);
+    /*-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 4, 0.0, 0, 0);*/
+}
+.upload-button:armed Text {
+    -fx-fill: derive(-imgur-default-text-color, -80%);
+}
+
+.button-dark {
+    -fx-background-color: 
+        #090a0c,
+        linear-gradient(#38424b 0%, #1f2429 20%, #191d22 100%),
+        linear-gradient(#20262b, #191d22),
+        radial-gradient(center 50% 0%, radius 100%, rgba(114,131,148,0.9), rgba(255,255,255,0));
+    -fx-background-radius: 5,4,3,5;
+    -fx-background-insets: 0,1,2,0;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow( three-pass-box , rgba(0,0,0,0.6) , 5, 0.0 , 0 , 1 );
+    -fx-font-family: "Arial";
+    -fx-text-fill: linear-gradient(white, #d0d0d0);
+    -fx-padding: 10 20 10 20;
+}
+.button-dark Text {
+    -fx-effect: dropshadow( one-pass-box , rgba(0,0,0,0.9) , 1, 0.0 , 0 , 1 );
+}

@@ -1,0 +1,19 @@
+.groupbox-title {
+  -fx-background-color: transparent;
+  -fx-text-fill: -imgur-default-text-color;
+  -fx-translate-y: -16;
+  -fx-padding: -2 2 5 2;
+}
+
+.groupbox-border {
+  -fx-content-display: top;
+  -fx-padding: 7 5 5 5;
+  -fx-border-insets: 0;
+  -fx-background-color: transparent;
+  -fx-border-color: -imgur-color-bg-1;
+  -fx-border-width: 0.5;
+}
+
+.groupbox-content {
+
+}
