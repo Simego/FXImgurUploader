@@ -1,5 +1,4 @@
 # FXImgurUploader
-=============
 
 **The new ImgurUploader is made with JavaFX (no swing), uses Java 8 but is a little faster, a lot better and much prettier, many improvements to be made since it's not finished and code to be rewritten.**
 
