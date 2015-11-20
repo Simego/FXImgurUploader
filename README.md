@@ -4,4 +4,4 @@
 
 *(this project started as a test so with time many stuff will be rewritten, for example the main class holds everything of the main application and UI/config building)*
 
-![](http://i.imgur.com/xyKFG3B.png)
+![](http://i.imgur.com/PeyesgA.png)
