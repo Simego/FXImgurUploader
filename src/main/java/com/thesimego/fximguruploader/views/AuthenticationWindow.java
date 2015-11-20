@@ -1,4 +1,4 @@
-package com.thesimego.fximguruploader;
+package com.thesimego.fximguruploader.views;
 
 import com.thesimego.fximguruploader.entity.AccessTokenEN;
 import com.thesimego.fximguruploader.tools.Functions;

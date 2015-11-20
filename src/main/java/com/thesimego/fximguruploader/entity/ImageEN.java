@@ -60,6 +60,7 @@ public class ImageEN extends GenericEN<ImageEN> {
     public Label getTableRowHoverNode() {
         if (label == null) {
             label = new Label();
+//            grid = new GridPane();
 //            grid.setHgap(10);
 //            grid.setVgap(5);
             BufferedImage image;
@@ -77,14 +78,14 @@ public class ImageEN extends GenericEN<ImageEN> {
                 ImageView imView = new ImageView(wi);
                 label.setGraphic(imView);
             }
-//            ColumnConstraints col1 = new ColumnConstraints();
-//            col1.setFillWidth(true);
-//            col1.setHalignment(HPos.RIGHT);
-//            grid.getColumnConstraints().addAll(col1);
-//            grid.add(LabelBuilder.create("DeleteHash:").get(), 0, 0);
-//            grid.add(new Label(getDeletehash()), 1, 0);
-//            grid.add(LabelBuilder.create("ID:").get(), 0, 1);
-//            grid.add(new Label(getId().toString()), 1, 1);
+////            ColumnConstraints col1 = new ColumnConstraints();
+////            col1.setFillWidth(true);
+////            col1.setHalignment(HPos.RIGHT);
+////            grid.getColumnConstraints().addAll(col1);
+////            grid.add(LabelBuilder.create("DeleteHash:").get(), 0, 0);
+////            grid.add(new Label(getDeletehash()), 1, 0);
+////            grid.add(LabelBuilder.create("ID:").get(), 0, 1);
+////            grid.add(new Label(getId().toString()), 1, 1);
         }
         return label;
     }

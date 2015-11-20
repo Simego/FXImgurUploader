@@ -23,7 +23,7 @@
     -fx-background-radius: 5px;
     -fx-text-fill: -imgur-default-green;
     -fx-font-weight: bold;
-    -fx-effect: dropshadow(gaussian, -imgur-default-green, 6, 0.1, 0, 0)
+    -fx-effect: dropshadow(gaussian, -imgur-default-green, 6, 0.1, 0, 0);
 }
 .tooltip GridPane Label {
     -fx-text-fill: -imgur-default-green;

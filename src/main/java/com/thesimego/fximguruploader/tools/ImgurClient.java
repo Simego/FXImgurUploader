@@ -1,6 +1,6 @@
 package com.thesimego.fximguruploader.tools;
 
-import com.thesimego.fximguruploader.Main;
+import com.thesimego.fximguruploader.views.Main;
 import com.thesimego.fximguruploader.entity.AccessTokenEN;
 import com.thesimego.fximguruploader.entity.AlbumEN;
 import com.thesimego.fximguruploader.entity.ImageEN;
@@ -37,8 +37,8 @@ public class ImgurClient {
 
     private final Main mainView;
 
-    public static final String CLIENT_ID = "YOUR_CLIENT_ID";
-    public static final String CLIENT_SECRET = "YOUR_CLIENT_SECRET";
+    public static final String CLIENT_ID = "CLIENT_ID_FROM_YOUR_IMGUR_APPLICATION";
+    public static final String CLIENT_SECRET = "CLIENT_SECRET_FROM_YOUR_IMGUR_APPLICATION";
 
     public ImgurClient(Main view) {
         mainView = view;
@@ -62,7 +62,6 @@ public class ImgurClient {
 //            return null;
 //        }
 //    }
-    @Deprecated
     private String imageUpload(String token, BufferedImage image, String album) throws IOException {
         ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
         ImageIO.write(image, "jpg", byteArray);
@@ -321,7 +320,7 @@ public class ImgurClient {
             AccessTokenEN.dao.update(accessToken);
         } catch (SQLException ex) {
             Platform.runLater(() -> {
-                Dialogs.create().message("THere was an error getting a new Access Token from Imgur, try relogging.").showError();
+                Dialogs.create().message("There was an error getting a new Access Token from Imgur, try relogging.").showError();
             });
         }
         return accessToken;
@@ -450,6 +449,18 @@ public class ImgurClient {
             return ImgurV3ImageRequest.FIND.link.replace("{0}", id);
         }
 
+        private String delete(String id) {
+            return ImgurV3ImageRequest.DELETE.link.replace("{0}", id);
+        }
+
+        private String update(String id) {
+            return ImgurV3ImageRequest.UPDATE.link.replace("{0}", id);
+        }
+
+        private String favorite(String id) {
+            return ImgurV3ImageRequest.FAVORITE.link.replace("{0}", id);
+        }
+        
         private HttpURLConnection doUpload(ImageEN image, AlbumEN album) throws IOException {
             BufferedImage bi = ImageIO.read(new File(Locations.image(image.getFilename())));
             ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
@@ -469,18 +480,7 @@ public class ImgurClient {
 
             return createConnection(ImgurV3ImageRequest.UPLOAD.link, ImgurV3ImageRequest.UPLOAD.method, data);
         }
-
-        private String delete(String id) {
-            return ImgurV3ImageRequest.DELETE.link.replace("{0}", id);
-        }
-
-        private String update(String id) {
-            return ImgurV3ImageRequest.UPDATE.link.replace("{0}", id);
-        }
-
-        private String favorite(String id) {
-            return ImgurV3ImageRequest.FAVORITE.link.replace("{0}", id);
-        }
+        
     }
 
     public enum ImgurV3ImageRequest {

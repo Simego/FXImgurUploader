@@ -1,4 +1,4 @@
-package com.thesimego.fximguruploader;
+package com.thesimego.fximguruploader.views;
 
 import com.j256.ormlite.stmt.PreparedQuery;
 import com.thesimego.framework.jfx.builder.TooltipBuilder;
@@ -29,6 +29,8 @@ import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
@@ -37,6 +39,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -45,7 +49,6 @@ import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -60,7 +63,10 @@ import javafx.scene.control.ToolBar;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -71,7 +77,6 @@ import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import javax.imageio.ImageIO;
 import net.coobird.thumbnailator.Thumbnails;
-import org.controlsfx.control.PopOver;
 import org.controlsfx.control.action.Action;
 import org.controlsfx.dialog.Dialog;
 import org.controlsfx.dialog.Dialogs;
@@ -79,6 +84,10 @@ import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
+import javafx.scene.image.Image;
+import javafx.embed.swing.SwingFXUtils;
+import javafx.geometry.Insets;
+import javafx.scene.image.ImageView;
 
 /**
  *
@@ -99,6 +108,7 @@ public class Main extends Application {
     private GroupBox albumBox;
     private HBox loginBox;
     private CheckBox checkBoxOpenLink;
+    private StackPane lockPane;
 
     private TableView<ImageEN> imageTable;
     private TableView<AlbumEN> albumTable;
@@ -139,6 +149,10 @@ public class Main extends Application {
             }
         }
 
+        ResourceBundle bundle = ResourceBundle.getBundle("messages", new Locale("en", "US"));
+//        System.out.println(bundle.getBaseBundleName());
+//        System.out.println(bundle.getString("test"));
+        
         /*
          String e = "{\"data\":{\"error\":\"Fake Error\",\"request\":\"\\/3\\/account\\/imgur\\/images.json\",\"method\":\"GET\"},\"success\":true,\"status\":\"200\"}";
          String t = "{\"data\":{\"id\":\"T4njaMC\",\"title\":\"teste dev 2\",\"description\":null,\"datetime\":1438627005,\"type\":\"image/jpeg\",\"animated\":false,\"width\":1920,\"height\":1080,\"size\":145241,\"views\":0,\"bandwidth\":0,\"vote\":null,\"favorite\":false,\"nsfw\":null,\"section\":null,\"account_url\":null,\"account_id\":9042594,\"comment_preview\":null,\"deletehash\":\"R8e8ZGwev52phEx\",\"name\":\"\",\"link\":\"http://i.imgur.com/T4njaMC.jpg\"},\"success\":true,\"status\":200}";
@@ -155,6 +169,7 @@ public class Main extends Application {
 //        } catch (SQLException ex) {
 //            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
 //        }
+        
         // Clear previous logging configurations.
         LogManager.getLogManager().reset();
 
@@ -274,12 +289,79 @@ public class Main extends Application {
         primaryStage.show();
         primaryStage.setHeight(root.getHeight());
         primaryStage.setWidth(850);
+        
 //        primaryStage.setHeight(637);
 //        ResizeHelper.addResizeListener(primaryStage);
 //        primaryStage.setResizable(false);
         /* ================= */
-
 //        populate();
+        /* */
+        
+        scene.setOnDragOver(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent event) {
+                Dragboard db = event.getDragboard();
+                if (db.hasFiles() || db.hasUrl() || db.hasImage()) {
+                    event.acceptTransferModes(TransferMode.ANY);
+                } else {
+                    event.consume();
+                }
+            }
+        });
+        
+        // Dropping over surface
+        scene.setOnDragDropped(new EventHandler<DragEvent>() {
+            @Override
+            public void handle(DragEvent event) {
+                Dragboard db = event.getDragboard();
+                boolean success = false;
+                if (db.hasFiles()) {
+                    for (File file:db.getFiles()) {
+                        String filePath = file.getAbsolutePath();
+                        if(file.getName().matches(".*\\.(jpg|jpeg|png|bmp|)")) {
+                            Image image = new Image(file.toURI().toString());
+                            try {
+                                String split[] = filePath.split("\\.");
+                                String extension = split[split.length-1];
+                                ImageEN imageEN = createImage(SwingFXUtils.fromFXImage(image, null), extension);
+                            } catch (SQLException | IOException ex) {
+                                String msg = "There was a problem saving the image.";
+                                showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
+                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
+                            }
+                        }
+                    }
+                    success = true;
+                } else if(db.hasUrl()) {
+                    BufferedImage image;
+                    try {
+                        URL url = new URL(db.getUrl());
+                        URLConnection conn = url.openConnection();
+                        String extension = conn.getContentType().split("/")[1];
+                        image = ImageIO.read(url);
+                        ImageEN imageEN = createImage(image, extension);
+                    } catch (SQLException | IOException ex) {
+                        String msg = "There was a problem saving the image from the URL.";
+                        showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
+                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
+                    }
+                    success = true;
+                } else if(db.hasImage()) {
+                    Image image = db.getImage();
+                    try {
+                        ImageEN imageEN = createImage(SwingFXUtils.fromFXImage(image, null), "png");
+                    } catch (SQLException | IOException ex) {
+                        String msg = "There was a problem saving the image.";
+                        showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
+                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
+                    }
+                    success = true;
+                }
+                event.setDropCompleted(success);
+                event.consume();
+            }
+        });
+        
     }
 
     private void populate() {
@@ -532,22 +614,24 @@ public class Main extends Application {
             final ContextMenu contextMenu = new ContextMenu(new CustomMenuItem(getCheckBoxOpenLink(), false), browser, logoutMenu);
             contextMenu.getStyleClass().add("context-menu-user");
 
-            primaryStage.getScene().addEventFilter(MouseEvent.MOUSE_MOVED, (MouseEvent event) -> {
-//                System.out.println(String.format("X: %f - Y: %f", event.getSceneX(), event.getSceneY()));
-                Bounds buttonBounds = getLoggedButton().localToScene(getLoggedButton().getLayoutBounds());
-//                Bounds popupBounds = contextMenu.getScene().getRoot().localToParent(contextMenu.getScene().getRoot().getLayoutBounds());
-                if (buttonBounds.contains(event.getSceneX(), event.getSceneY()) /*|| popupBounds.contains(event.getSceneX(), event.getSceneY())*/) {
-//                    System.out.println("contains");
-                    if (!contextMenu.isShowing()) {
-                        Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
-                        contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
-                    }
-                } else if (contextMenu.isShowing()) {
-                    contextMenu.hide();
-                }
-//                if(event.getTarget() instanceof Node) {
-//                    System.out.println(Arrays.toString(((Node) event.getTarget()).getStyleClass().toArray()));
+//            primaryStage.getScene().addEventFilter(MouseEvent.MOUSE_MOVED, (MouseEvent event) -> {
+//                Bounds buttonBounds = getLoggedButton().localToScene(getLoggedButton().getLayoutBounds());
+//                if (buttonBounds.contains(event.getSceneX(), event.getSceneY()) /*|| popupBounds.contains(event.getSceneX(), event.getSceneY())*/) {
+//                    if (!contextMenu.isShowing()) {
+//                        Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
+//                        contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
+//                    }
+//                } else if (contextMenu.isShowing()) {
+//                    contextMenu.hide();
 //                }
+//            });
+            loggedButton.setOnMouseEntered((MouseEvent event) -> {
+                Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
+                contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
+            });
+            loggedButton.setOnMouseClicked((MouseEvent event) -> {
+                Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
+                contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
             });
         }
         return loggedButton;
@@ -573,6 +657,8 @@ public class Main extends Application {
                     return;
                 }
 
+                lockScreen();
+                
                 new Thread(() -> {
                     try {
                         ImgurV3Image.execute(ImgurV3ImageRequest.UPLOAD, image, null, (Basic param) -> {
@@ -594,6 +680,8 @@ public class Main extends Application {
                         Platform.runLater(() -> {
                             showErrorDialog(ex.getMessage());
                         });
+                    } finally {
+                        unlockScreen();
                     }
                 }).start();
             });
@@ -601,6 +689,25 @@ public class Main extends Application {
         return uploadButton;
     }
 
+    public void lockScreen() {
+        getLockPane().setVisible(true);
+    }
+    
+    public void unlockScreen() {
+        getLockPane().setVisible(false);
+    }
+    
+    public StackPane getLockPane() {
+        if(lockPane == null) {
+            lockPane = new StackPane();
+//            lockPane.setPadding(new Insets(50));
+            lockPane.setStyle("-fx-background-color: rgba(50,50,50,0.6); -fx-background-radius: 10px;");
+            ((StackPane)primaryStage.getScene().getRoot()).getChildren().add(lockPane);
+            lockPane.getChildren().add(new ImageView(new Image(new File("C:/Users/drafaelli/Pictures/loading-gallery.gif").toURI().toString(), 100, 100, true, true)));
+        }
+        return lockPane;
+    }
+    
     private void doLogin(AccessTokenEN accessToken) {
         try {
             PreparedQuery query = AccessTokenEN.dao.queryBuilder().where().eq(AccessTokenEN.ACCOUNT_ID, accessToken.getAccountId()).prepare();
@@ -672,25 +779,7 @@ public class Main extends Application {
                     if (nke.getKeyCode() == NativeKeyEvent.VC_PRINTSCREEN) {
 //                        System.out.println("Screen Printed!");
                         try {
-                            String filename = new SimpleDateFormat("yyyy-MM-ddHH-mm-ss").format(new Date()) + ".png";
-                            BufferedImage bi = Functions.getScreenBufferedImage();
-                            File outputfile = new File(Locations.image(filename));
-                            ImageIO.write(bi, "png", outputfile);
-
-                            File outputfileThumbnail = new File(Locations.thumbnail(filename));
-                            Thumbnails
-                                    .of(bi)
-                                    .size(150, 150)
-                                    .outputFormat("png")
-                                    .toFile(outputfileThumbnail);
-                            ImageEN image = new ImageEN();
-                            image.setFilename(filename);
-                            image.setDate(new Date());
-
-                            ImageEN.dao.create(image);
-                            getImageTable().getItems().add(0, image);
-//                                    getImageTable().requestLayout();
-
+                            ImageEN image = createImage(Functions.getScreenBufferedImage(), "png");
                         } catch (AWTException | IOException | SQLException ex) {
                             String msg = "There was a problem saving the screenshot.";
                             showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
@@ -711,6 +800,34 @@ public class Main extends Application {
             };
         }
         return printScreenListener;
+    }
+    
+    /**
+     * 
+     * @param bi
+     * @param ext
+     * @return
+     * @throws SQLException
+     * @throws IOException
+     * @throws AWTException 
+     */
+    private ImageEN createImage(BufferedImage bi, String ext) throws SQLException, IOException {
+        String filename = new SimpleDateFormat("yyyy-MM-ddHH-mm-ss").format(new Date()) + "." + ext;
+        File outputfile = new File(Locations.image(filename));
+        ImageIO.write(bi, ext, outputfile);
+        File outputfileThumbnail = new File(Locations.thumbnail(filename));
+        Thumbnails
+                .of(bi)
+                .size(150, 150)
+                .outputFormat(ext)
+                .toFile(outputfileThumbnail);
+        ImageEN image = new ImageEN();
+        image.setFilename(filename);
+        image.setDate(new Date());
+        ImageEN.dao.create(image);
+        
+        getImageTable().getItems().add(0, image);
+        return image;
     }
 
     @Override
