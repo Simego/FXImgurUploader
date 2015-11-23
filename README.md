@@ -18,10 +18,10 @@ The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** bu
 ![](http://i.imgur.com/PeyesgA.png)
 
 ### Changelog
-#### v1.1
+#### v0.2
 * added drag and drop support for urls and images
 * now while uploading the screen will be locked until it finishes
 * starting internationalization support with ResourceBundles
 
-#### v1.0
+#### v0.1
 * first version, created everything, many stuff to be improved
