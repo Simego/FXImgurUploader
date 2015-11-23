@@ -4,7 +4,7 @@ The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** bu
 
 * **Java 8 needed**: https://www.java.com/download
 
-* **Please report issues and improvements/ideas in the [>Issues<](https://github.com/Simego/FXImgurUploader/issues) section, thanks!!**
+* **Please report issues and improvements/ideas in the [> Issues <](https://github.com/Simego/FXImgurUploader/issues) section, thanks!!**
 
 *(this project started as a test so with time many stuff will be rewritten, for example the main class holds everything of the main application and UI/config building)*
 
@@ -18,10 +18,13 @@ The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** bu
 ![](http://i.imgur.com/PeyesgA.png)
 
 ### Changelog
+#### v0.3
+* Now you can delete photos from the table, if it's uploaded the image will be deleted from Imgur.
+
 #### v0.2
-* added drag and drop support for urls and images
-* now while uploading the screen will be locked until it finishes
-* starting internationalization support with ResourceBundles
+* Added drag and drop support for urls and images.
+* Now while uploading the screen will be locked until it finishes.
+* Starting internationalization support with ResourceBundles.
 
 #### v0.1
-* first version, created everything, many stuff to be improved
+* First version, created everything, many stuff to be improved.
