@@ -86,8 +86,10 @@ import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 import javafx.scene.image.Image;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.geometry.Insets;
+import javafx.geometry.Bounds;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 
 /**
  *
@@ -137,7 +139,7 @@ public class Main extends Application {
         primaryStage.initStyle(StageStyle.TRANSPARENT);
 
         System.setProperty("java.net.useSystemProxies", "true");
-        
+
         /* ==== DATABASE ==== */
         try {
             ORMLite.openConnection();
@@ -152,7 +154,7 @@ public class Main extends Application {
         ResourceBundle bundle = ResourceBundle.getBundle("messages", new Locale("en", "US"));
 //        System.out.println(bundle.getBaseBundleName());
 //        System.out.println(bundle.getString("test"));
-        
+
         /*
          String e = "{\"data\":{\"error\":\"Fake Error\",\"request\":\"\\/3\\/account\\/imgur\\/images.json\",\"method\":\"GET\"},\"success\":true,\"status\":\"200\"}";
          String t = "{\"data\":{\"id\":\"T4njaMC\",\"title\":\"teste dev 2\",\"description\":null,\"datetime\":1438627005,\"type\":\"image/jpeg\",\"animated\":false,\"width\":1920,\"height\":1080,\"size\":145241,\"views\":0,\"bandwidth\":0,\"vote\":null,\"favorite\":false,\"nsfw\":null,\"section\":null,\"account_url\":null,\"account_id\":9042594,\"comment_preview\":null,\"deletehash\":\"R8e8ZGwev52phEx\",\"name\":\"\",\"link\":\"http://i.imgur.com/T4njaMC.jpg\"},\"success\":true,\"status\":200}";
@@ -169,7 +171,6 @@ public class Main extends Application {
 //        } catch (SQLException ex) {
 //            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
 //        }
-        
         // Clear previous logging configurations.
         LogManager.getLogManager().reset();
 
@@ -286,17 +287,19 @@ public class Main extends Application {
 
         primaryStage.setScene(scene);
         primaryStage.setTitle("ImgurUploader");
+        primaryStage.getIcons().add(new Image("img/icon.png"));
         primaryStage.show();
         primaryStage.setHeight(root.getHeight());
         primaryStage.setWidth(850);
-        
+
 //        primaryStage.setHeight(637);
 //        ResizeHelper.addResizeListener(primaryStage);
 //        primaryStage.setResizable(false);
         /* ================= */
 //        populate();
         /* */
-        
+        getLockPane();
+
         scene.setOnDragOver(new EventHandler<DragEvent>() {
             @Override
             public void handle(DragEvent event) {
@@ -308,7 +311,7 @@ public class Main extends Application {
                 }
             }
         });
-        
+
         // Dropping over surface
         scene.setOnDragDropped(new EventHandler<DragEvent>() {
             @Override
@@ -316,13 +319,16 @@ public class Main extends Application {
                 Dragboard db = event.getDragboard();
                 boolean success = false;
                 if (db.hasFiles()) {
-                    for (File file:db.getFiles()) {
+                    for (File file : db.getFiles()) {
                         String filePath = file.getAbsolutePath();
-                        if(file.getName().matches(".*\\.(jpg|jpeg|png|bmp|)")) {
+                        if (file.getName().matches(".*\\.(jpg|jpeg|png|bmp|)")) {
                             Image image = new Image(file.toURI().toString());
                             try {
                                 String split[] = filePath.split("\\.");
-                                String extension = split[split.length-1];
+                                String extension = split[split.length - 1];
+                                if (image.getException() != null) {
+                                    showErrorDialog(image.getException().getMessage());
+                                }
                                 ImageEN imageEN = createImage(SwingFXUtils.fromFXImage(image, null), extension);
                             } catch (SQLException | IOException ex) {
                                 String msg = "There was a problem saving the image.";
@@ -332,7 +338,7 @@ public class Main extends Application {
                         }
                     }
                     success = true;
-                } else if(db.hasUrl()) {
+                } else if (db.hasUrl()) {
                     BufferedImage image;
                     try {
                         URL url = new URL(db.getUrl());
@@ -346,7 +352,7 @@ public class Main extends Application {
                         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
                     }
                     success = true;
-                } else if(db.hasImage()) {
+                } else if (db.hasImage()) {
                     Image image = db.getImage();
                     try {
                         ImageEN imageEN = createImage(SwingFXUtils.fromFXImage(image, null), "png");
@@ -361,7 +367,7 @@ public class Main extends Application {
                 event.consume();
             }
         });
-        
+
     }
 
     private void populate() {
@@ -473,7 +479,7 @@ public class Main extends Application {
                     .onClick((EventHandler<MouseEvent>) event -> {
                         if (event.getClickCount() == 2) {
                             ImageEN entity = imageTable.getSelectionModel().getSelectedItem();
-                            // Ignora se for nulo ou não tiver link
+                            // Ignora se for nulo ou nÃ£o tiver link
                             if (entity == null || entity.getLink() == null) {
                                 return;
                             }
@@ -496,6 +502,43 @@ public class Main extends Application {
             imageTable.setPrefHeight(300);
             imageTable.getSelectionModel().selectedItemProperty().addListener((ObservableValue<? extends ImageEN> observable, ImageEN oldValue, ImageEN newValue) -> {
                 updateUploadButton();
+            });
+            // Delete listener
+            imageTable.setOnKeyPressed((KeyEvent event) -> {
+                ImageEN image = imageTable.getSelectionModel().getSelectedItem();
+                if (event.getCode() == KeyCode.DELETE && showConfirmDialog("Delete Image", "Do you want to delete this image?") == Dialog.ACTION_YES) {
+                    Callback<Basic, Void> callback = (Basic param) -> {
+                        Platform.runLater(() -> {
+                            try {
+                                Files.delete(Paths.get(Locations.image(image.getFilename())));
+                                Files.delete(Paths.get(Locations.thumbnail(image.getFilename())));
+                                ImageEN.dao.delete(image);
+                                imageTable.getItems().remove(image);
+                            } catch (SQLException | IOException ex) {
+                                // TODO log to console
+                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        });
+                        return null;
+                    };
+                    
+                    if(image.getLink() == null) { // uploaded image
+                        callback.call(null);
+                    } else {
+                        lockScreen();
+                        new Thread(() -> {
+                            try {
+                                ImgurV3Image.execute(ImgurV3ImageRequest.DELETE, image, null, callback);
+                            } catch (IOException ex) {
+                                // TODO log to console
+                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                            } finally {
+                                unlockScreen();
+                            }
+                        }).start();
+                    }
+                    
+                }
             });
         }
         return imageTable;
@@ -614,25 +657,25 @@ public class Main extends Application {
             final ContextMenu contextMenu = new ContextMenu(new CustomMenuItem(getCheckBoxOpenLink(), false), browser, logoutMenu);
             contextMenu.getStyleClass().add("context-menu-user");
 
-//            primaryStage.getScene().addEventFilter(MouseEvent.MOUSE_MOVED, (MouseEvent event) -> {
-//                Bounds buttonBounds = getLoggedButton().localToScene(getLoggedButton().getLayoutBounds());
-//                if (buttonBounds.contains(event.getSceneX(), event.getSceneY()) /*|| popupBounds.contains(event.getSceneX(), event.getSceneY())*/) {
-//                    if (!contextMenu.isShowing()) {
-//                        Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
-//                        contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
-//                    }
-//                } else if (contextMenu.isShowing()) {
-//                    contextMenu.hide();
-//                }
-//            });
-            loggedButton.setOnMouseEntered((MouseEvent event) -> {
-                Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
-                contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
+            primaryStage.getScene().addEventFilter(MouseEvent.MOUSE_MOVED, (MouseEvent event) -> {
+                Bounds buttonBounds = getLoggedButton().localToScene(getLoggedButton().getLayoutBounds());
+                if (buttonBounds.contains(event.getSceneX(), event.getSceneY()) /*|| popupBounds.contains(event.getSceneX(), event.getSceneY())*/) {
+                    if (!contextMenu.isShowing() && !getLockPane().isVisible()) { // only if the lockpane is not visible
+                        Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
+                        contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
+                    }
+                } else if (contextMenu.isShowing()) {
+                    contextMenu.hide();
+                }
             });
-            loggedButton.setOnMouseClicked((MouseEvent event) -> {
-                Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
-                contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
-            });
+            /*loggedButton.setOnMouseEntered((MouseEvent event) -> {
+             Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
+             contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
+             });
+             loggedButton.setOnMouseClicked((MouseEvent event) -> {
+             Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
+             contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
+             });*/
         }
         return loggedButton;
     }
@@ -658,14 +701,14 @@ public class Main extends Application {
                 }
 
                 lockScreen();
-                
+
                 new Thread(() -> {
                     try {
                         ImgurV3Image.execute(ImgurV3ImageRequest.UPLOAD, image, null, (Basic param) -> {
                             Platform.runLater(() -> {
-                                // Passar info para console
                                 if (param.getSuccess()) {
-                                    Dialogs.create().lightweight().styleClass(Dialog.STYLE_CLASS_CROSS_PLATFORM).title("Upload").masthead("Your image has been uploaded.").showInformation();
+                                    // Print info to console
+                                    //Dialogs.create().lightweight().styleClass(Dialog.STYLE_CLASS_CROSS_PLATFORM).title("Upload").masthead("Your image has been uploaded.").showInformation();
                                 } else {
                                     showErrorDialog("There was a problem uploading your image, please try again.");
                                 }
@@ -692,22 +735,22 @@ public class Main extends Application {
     public void lockScreen() {
         getLockPane().setVisible(true);
     }
-    
+
     public void unlockScreen() {
         getLockPane().setVisible(false);
     }
-    
+
     public StackPane getLockPane() {
-        if(lockPane == null) {
+        if (lockPane == null) {
             lockPane = new StackPane();
-//            lockPane.setPadding(new Insets(50));
+            lockPane.setVisible(false);
             lockPane.setStyle("-fx-background-color: rgba(50,50,50,0.6); -fx-background-radius: 10px;");
-            ((StackPane)primaryStage.getScene().getRoot()).getChildren().add(lockPane);
-            lockPane.getChildren().add(new ImageView(new Image(new File("C:/Users/drafaelli/Pictures/loading-gallery.gif").toURI().toString(), 100, 100, true, true)));
+            ((StackPane) primaryStage.getScene().getRoot()).getChildren().add(lockPane);
+            lockPane.getChildren().add(new ImageView(new Image("img/loading-gallery.gif", 100, 100, true, true)));
         }
         return lockPane;
     }
-    
+
     private void doLogin(AccessTokenEN accessToken) {
         try {
             PreparedQuery query = AccessTokenEN.dao.queryBuilder().where().eq(AccessTokenEN.ACCOUNT_ID, accessToken.getAccountId()).prepare();
@@ -769,6 +812,10 @@ public class Main extends Application {
     public Action showErrorDialog(String masthead, String message) {
         return Dialogs.create().title("Error").masthead(masthead).message(message).owner(primaryStage == null ? null : primaryStage).styleClass(primaryStage == null ? Dialog.STYLE_CLASS_CROSS_PLATFORM : Dialog.STYLE_CLASS_UNDECORATED).showError();
     }
+    
+    public Action showConfirmDialog(String title, String message) {
+        return Dialogs.create().title(title).message(message).owner(primaryStage).actions(Dialog.ACTION_YES, Dialog.ACTION_NO).styleClass(Dialog.STYLE_CLASS_UNDECORATED).showConfirm();
+    }
 
     private NativeKeyListener getPrintScreenListener() {
         if (printScreenListener == null) {
@@ -801,15 +848,15 @@ public class Main extends Application {
         }
         return printScreenListener;
     }
-    
+
     /**
-     * 
+     *
      * @param bi
      * @param ext
      * @return
      * @throws SQLException
      * @throws IOException
-     * @throws AWTException 
+     * @throws AWTException
      */
     private ImageEN createImage(BufferedImage bi, String ext) throws SQLException, IOException {
         String filename = new SimpleDateFormat("yyyy-MM-ddHH-mm-ss").format(new Date()) + "." + ext;
@@ -825,7 +872,7 @@ public class Main extends Application {
         image.setFilename(filename);
         image.setDate(new Date());
         ImageEN.dao.create(image);
-        
+
         getImageTable().getItems().add(0, image);
         return image;
     }

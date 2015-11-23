@@ -25,7 +25,7 @@ import javafx.util.Callback;
  * @author Simego
  */
 public class AuthenticationWindow extends Stage {
-
+    
     public AuthenticationWindow(Stage owner, Callback<AccessTokenEN, Void> callback) {
         initOwner(owner);
         initStyle(StageStyle.UTILITY);

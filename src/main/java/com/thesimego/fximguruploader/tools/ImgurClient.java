@@ -402,7 +402,6 @@ public class ImgurClient {
     public static class ImgurV3Image extends ImgurBase {
 
         public static void execute(ImgurV3ImageRequest type, ImageEN image, AlbumEN album, Callback<Basic, Void> callback) throws IOException {
-
             PreferencesEN preference = PreferencesEN.get();
             AccessTokenEN accessToken = AccessTokenEN.getByAccountId(preference.getLoggedAccountId());
             if(accessToken == null) {
@@ -424,10 +423,19 @@ public class ImgurClient {
                 case UPLOAD:
                     conn = v3Request.doUpload(image, album);
                     break;
+                case DELETE:
+                    conn = v3Request.doDelete(image);
             }
 
             String response = v3Request.executeRequest(conn);
-            Basic basic = new JSONDeserializer<Basic>().use("data", ImgurImage.class).deserialize(response, Basic.class);
+            Basic basic;
+            if(response.contains("\"data\":{")) {
+                basic = new JSONDeserializer<Basic>().use("data", ImgurImage.class).deserialize(response, Basic.class);
+            } else if(response.contains("\"data\":true") || response.contains("\"data\":false")) {
+                basic = new JSONDeserializer<Basic>().use("data", Boolean.class).deserialize(response, Basic.class);
+            } else {
+                basic = new JSONDeserializer<Basic>().deserialize(response, Basic.class);
+            }
 
             try {
                 switch (type) {
@@ -437,10 +445,23 @@ public class ImgurClient {
                         image.setLink(i.getLink());
                         ImageEN.dao.update(image);
                         break;
+//                    case DELETE:
+//                        break;
                 }
-                callback.call(basic);
+                if(callback != null) {
+                    callback.call(basic);
+                }
             } catch (SQLException ex) {
-                Logger.getLogger(ImgurClient.class.getName()).log(Level.SEVERE, "Failed to update Image entity.", ex);
+                // Log to console
+                Logger.getLogger(ImgurClient.class.getName()).log(Level.SEVERE, null, ex);
+                Platform.runLater(() -> {
+                    Dialogs.create()
+                            .lightweight()
+                            .styleClass(Dialog.STYLE_CLASS_CROSS_PLATFORM)
+                            .title("Request failed")
+                            .message("Failed requesting the method '"+ type.name() +"'")
+                            .showError();
+                });
             }
 
         }
@@ -479,6 +500,10 @@ public class ImgurClient {
             data += "&" + URLEncoder.encode("image", "UTF-8") + "=" + URLEncoder.encode(dataImage, "UTF-8");
 
             return createConnection(ImgurV3ImageRequest.UPLOAD.link, ImgurV3ImageRequest.UPLOAD.method, data);
+        }
+        
+        private HttpURLConnection doDelete(ImageEN image) throws IOException {
+            return createConnection(delete(image.getImageId()), ImgurV3ImageRequest.DELETE.method, null);
         }
         
     }
