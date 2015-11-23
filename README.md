@@ -4,7 +4,7 @@ The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** bu
 
 * **Java 8 needed**: https://www.java.com/download
 
-* **Please report issues and improvements/ideas in the Issues section, thanks!!**
+* **Please report issues and improvements/ideas in the [>Issues<](https://github.com/Simego/FXImgurUploader/issues) section, thanks!!**
 
 *(this project started as a test so with time many stuff will be rewritten, for example the main class holds everything of the main application and UI/config building)*
 
