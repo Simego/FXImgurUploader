@@ -1,5 +1,6 @@
 package com.thesimego.fximguruploader.tools;
 
+import com.thesimego.framework.jfx.tools.FxDialogs;
 import com.thesimego.fximguruploader.views.Main;
 import com.thesimego.fximguruploader.entity.AccessTokenEN;
 import com.thesimego.fximguruploader.entity.AlbumEN;
@@ -26,8 +27,6 @@ import javafx.application.Platform;
 import javafx.util.Callback;
 import javax.imageio.ImageIO;
 import org.apache.commons.codec.binary.Base64;
-import org.controlsfx.dialog.Dialog;
-import org.controlsfx.dialog.Dialogs;
 
 /**
  *
@@ -320,7 +319,7 @@ public class ImgurClient {
             AccessTokenEN.dao.update(accessToken);
         } catch (SQLException ex) {
             Platform.runLater(() -> {
-                Dialogs.create().message("There was an error getting a new Access Token from Imgur, try relogging.").showError();
+                FxDialogs.showError("Error", "There was an error getting a new Access Token from Imgur, try relogging.");
             });
         }
         return accessToken;
@@ -406,13 +405,7 @@ public class ImgurClient {
             AccessTokenEN accessToken = AccessTokenEN.getByAccountId(preference.getLoggedAccountId());
             if(accessToken == null) {
                 Platform.runLater(() -> {
-                    Dialogs.create()
-                            .lightweight()
-                            .styleClass(Dialog.STYLE_CLASS_CROSS_PLATFORM)
-                            .title("Authentication Error")
-                            .masthead("You are not logged.")
-                            .message("To use the system please first log-in to Imgur via the \"sign in\" button.")
-                            .showError();
+                    FxDialogs.showError("Authentication Error", "You are not logged.\nTo use the system please first log-in to Imgur via the \"sign in\" button.");
                 });
                 return;
             }
@@ -455,12 +448,7 @@ public class ImgurClient {
                 // Log to console
                 Logger.getLogger(ImgurClient.class.getName()).log(Level.SEVERE, null, ex);
                 Platform.runLater(() -> {
-                    Dialogs.create()
-                            .lightweight()
-                            .styleClass(Dialog.STYLE_CLASS_CROSS_PLATFORM)
-                            .title("Request failed")
-                            .message("Failed requesting the method '"+ type.name() +"'")
-                            .showError();
+                    FxDialogs.showError("Request failed", "Failed requesting the method '"+ type.name() +"'");
                 });
             }
 

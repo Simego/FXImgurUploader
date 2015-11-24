@@ -4,6 +4,7 @@ import com.j256.ormlite.stmt.PreparedQuery;
 import com.thesimego.framework.jfx.builder.TooltipBuilder;
 import com.thesimego.framework.jfx.builder.TableBuilder;
 import com.thesimego.framework.jfx.components.GroupBox;
+import com.thesimego.framework.jfx.tools.FxDialogs;
 import com.thesimego.framework.sqlite.ORMLite;
 import com.thesimego.fximguruploader.entity.AccessTokenEN;
 import com.thesimego.fximguruploader.entity.AlbumEN;
@@ -78,8 +79,6 @@ import javafx.util.Callback;
 import javax.imageio.ImageIO;
 import net.coobird.thumbnailator.Thumbnails;
 import org.controlsfx.control.action.Action;
-import org.controlsfx.dialog.Dialog;
-import org.controlsfx.dialog.Dialogs;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
@@ -146,7 +145,7 @@ public class Main extends Application {
         } catch (SQLException ex) {
             String msg = "Failed connecting to the Database.";
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
-            if (showErrorDialog(msg, "The program will now close.\nPlease contact the developers for help and more information.") == Dialog.ACTION_OK) {
+            if (showConfirmDialog("Error", msg + "\nThe program will now close.\nPlease contact the developers for help and more information.").equals(FxDialogs.OK)) {
                 primaryStage.close();
             }
         }
@@ -506,7 +505,7 @@ public class Main extends Application {
             // Delete listener
             imageTable.setOnKeyPressed((KeyEvent event) -> {
                 ImageEN image = imageTable.getSelectionModel().getSelectedItem();
-                if (event.getCode() == KeyCode.DELETE && showConfirmDialog("Delete Image", "Do you want to delete this image?") == Dialog.ACTION_YES) {
+                if (event.getCode() == KeyCode.DELETE && showConfirmDialog("Delete Image", "Do you want to delete this image?").equals(FxDialogs.YES)) {
                     Callback<Basic, Void> callback = (Basic param) -> {
                         Platform.runLater(() -> {
                             try {
@@ -521,8 +520,8 @@ public class Main extends Application {
                         });
                         return null;
                     };
-                    
-                    if(image.getLink() == null) { // uploaded image
+
+                    if (image.getLink() == null) { // uploaded image
                         callback.call(null);
                     } else {
                         lockScreen();
@@ -537,7 +536,7 @@ public class Main extends Application {
                             }
                         }).start();
                     }
-                    
+
                 }
             });
         }
@@ -806,15 +805,15 @@ public class Main extends Application {
     }
 
     public void showErrorDialog(String message) {
-        Dialogs.create().lightweight().title("Error").message(message).owner(primaryStage).styleClass(Dialog.STYLE_CLASS_UNDECORATED).showError();
+        FxDialogs.showError("Error", message);
     }
 
-    public Action showErrorDialog(String masthead, String message) {
-        return Dialogs.create().title("Error").masthead(masthead).message(message).owner(primaryStage == null ? null : primaryStage).styleClass(primaryStage == null ? Dialog.STYLE_CLASS_CROSS_PLATFORM : Dialog.STYLE_CLASS_UNDECORATED).showError();
+    public void showErrorDialog(String masthead, String message) {
+        FxDialogs.showError("Error", masthead + "\n" + message);
     }
-    
-    public Action showConfirmDialog(String title, String message) {
-        return Dialogs.create().title(title).message(message).owner(primaryStage).actions(Dialog.ACTION_YES, Dialog.ACTION_NO).styleClass(Dialog.STYLE_CLASS_UNDECORATED).showConfirm();
+
+    public String showConfirmDialog(String title, String message) {
+        return FxDialogs.showConfirm(primaryStage, title, message, FxDialogs.YES, FxDialogs.NO);
     }
 
     private NativeKeyListener getPrintScreenListener() {
