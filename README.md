@@ -22,13 +22,13 @@ The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** bu
 * Native Dialogs from JavaFX 8.4+ (fixes for Java 8.6).
 * Dialogs have a nicer look now (imgur-like style).
 
-#### v0.3
+#### v0.3.0
 * Now you can delete photos from the table, if it's uploaded the image will be deleted from Imgur.
 
-#### v0.2
+#### v0.2.0
 * Added drag and drop support for urls and images.
 * Now while uploading the screen will be locked until it finishes.
 * Starting internationalization support with ResourceBundles.
 
-#### v0.1
+#### v0.1.0
 * First version, created everything, many stuff to be improved.
