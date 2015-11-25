@@ -18,6 +18,10 @@ The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** bu
 ![](http://i.imgur.com/PeyesgA.png)
 
 ### Changelog
+#### v0.4.0
+* Native Dialogs from JavaFX 8.4+ (fixes for Java 8.6).
+* Dialogs have a nicer look now (imgur-like style).
+
 #### v0.3
 * Now you can delete photos from the table, if it's uploaded the image will be deleted from Imgur.
 
