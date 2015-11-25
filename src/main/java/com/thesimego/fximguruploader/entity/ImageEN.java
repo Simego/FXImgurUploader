@@ -10,12 +10,15 @@ import com.thesimego.fximguruploader.tools.Locations;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javax.imageio.ImageIO;
+import net.coobird.thumbnailator.Thumbnails;
 
 /**
  *
@@ -54,6 +57,23 @@ public class ImageEN extends GenericEN<ImageEN> {
         // ORMLite
     }
 
+    public static ImageEN createImage(BufferedImage bi, String ext) throws SQLException, IOException {
+        String filename = new SimpleDateFormat("yyyy-MM-ddHH-mm-ss").format(new Date()) + "." + ext;
+        File outputfile = new File(Locations.image(filename));
+        ImageIO.write(bi, ext, outputfile);
+        File outputfileThumbnail = new File(Locations.thumbnail(filename));
+        Thumbnails
+                .of(bi)
+                .size(150, 150)
+                .outputFormat(ext)
+                .toFile(outputfileThumbnail);
+        ImageEN image = new ImageEN();
+        image.setFilename(filename);
+        image.setDate(new Date());
+        ImageEN.dao.create(image);
+        return image;
+    }
+    
     private Label label;
 
     @Override

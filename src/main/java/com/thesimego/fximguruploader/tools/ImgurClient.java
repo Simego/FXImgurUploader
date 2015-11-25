@@ -1,7 +1,7 @@
 package com.thesimego.fximguruploader.tools;
 
 import com.thesimego.framework.jfx.tools.FxDialogs;
-import com.thesimego.fximguruploader.views.Main;
+import com.thesimego.fximguruploader.Main;
 import com.thesimego.fximguruploader.entity.AccessTokenEN;
 import com.thesimego.fximguruploader.entity.AlbumEN;
 import com.thesimego.fximguruploader.entity.ImageEN;
@@ -319,7 +319,7 @@ public class ImgurClient {
             AccessTokenEN.dao.update(accessToken);
         } catch (SQLException ex) {
             Platform.runLater(() -> {
-                FxDialogs.showError("Error", "There was an error getting a new Access Token from Imgur, try relogging.");
+                FxDialogs.showError(null, "Error", "There was an error getting a new Access Token from Imgur, try relogging.");
             });
         }
         return accessToken;
@@ -405,7 +405,7 @@ public class ImgurClient {
             AccessTokenEN accessToken = AccessTokenEN.getByAccountId(preference.getLoggedAccountId());
             if(accessToken == null) {
                 Platform.runLater(() -> {
-                    FxDialogs.showError("Authentication Error", "You are not logged.\nTo use the system please first log-in to Imgur via the \"sign in\" button.");
+                    FxDialogs.showError(null, "Authentication Error", "You are not logged.\nTo use the system please first log-in to Imgur via the \"sign in\" button.");
                 });
                 return;
             }
@@ -448,7 +448,7 @@ public class ImgurClient {
                 // Log to console
                 Logger.getLogger(ImgurClient.class.getName()).log(Level.SEVERE, null, ex);
                 Platform.runLater(() -> {
-                    FxDialogs.showError("Request failed", "Failed requesting the method '"+ type.name() +"'");
+                    FxDialogs.showError(null, "Request failed", "Failed requesting the method '"+ type.name() +"'");
                 });
             }
 

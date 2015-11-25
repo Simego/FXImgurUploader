@@ -349,6 +349,7 @@
 }
 .upload-button:armed {
     -fx-text-fill: derive(-imgur-default-text-color, -80%);
+    -fx-background-color: linear-gradient(rgb(45, 103, 204) 0px, rgb(50, 116, 229) 100%);
     /*-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.9), 4, 0.0, 0, 0);*/
 }
 .upload-button:armed Text {
@@ -371,4 +372,141 @@
 }
 .button-dark Text {
     -fx-effect: dropshadow( one-pass-box , rgba(0,0,0,0.9) , 1, 0.0 , 0 , 1 );
+}
+
+
+
+
+
+
+/*******************************************************************************
+ *                                                                             *
+ * Dialog                                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.dialog-pane {
+    -fx-padding: 0;
+    /*    -fx-background-color: rgba(0,0,0,0.5);
+        -fx-background-radius: 10px;*/
+    -fx-background-color: -imgur-color-bg-2;
+    -fx-background-radius: 10px;
+    -fx-background-insets: 1px;
+    -fx-effect: dropshadow(gaussian, -imgur-default-green, 3, 0.1, 0, 0);
+}
+
+.dialog-pane > .expandable-content {
+    -fx-padding: 0.666em; /* 8px */
+}
+
+.dialog-pane > .button-bar > .container {
+    -fx-padding: 0.833em; /* 10px */
+}
+
+.dialog-pane > .content.label {
+    -fx-alignment: top-left;
+    -fx-padding: 1.333em 0.833em 0 0.833em; /* 16px 10px 0px 10px */
+    /*-fx-text-fill: -imgur-default-text-color;*/
+    -fx-text-fill: -imgur-default-green;
+}
+
+.dialog-pane > .content {
+    -fx-padding: 0.833em; /* 10 */
+}
+
+.dialog-pane:no-header .graphic-container {
+    -fx-padding: 0.833em 0 0 0.833em; /* 10px 0px 0px 10px */
+}
+
+.dialog-pane:header .header-panel {
+    /*-fx-padding: 0.833em 1.166em 0.833em 1.166em; *//* 10px 14px 10px 14px */
+    -fx-padding: 0.833em; /* 10px */
+    /*-fx-background-color: -fx-box-border, linear-gradient(-fx-background, derive(-fx-background, 30%));*/
+    -fx-background-color: derive(-imgur-color-bg-2, -20%);
+    -fx-background-radius: 10px 10px 0px 0px;
+    -fx-background-insets: 1px;
+    /*-fx-background-insets: 0, 0 0 1 0;*/
+}
+
+.dialog-pane:header .header-panel .label {
+    -fx-font-size: 1.167em; /* 14px */
+    -fx-font-weight: bold;
+    -fx-wrap-text: true;
+    /*-fx-text-fill: -imgur-default-text-color;*/
+    -fx-text-fill: -imgur-default-green;
+}
+
+.dialog-pane:header .header-panel .graphic-container {
+    /* This prevents the text in the header running directly into the graphic */
+    -fx-padding: 0 0 0 0.833em; /* 0px 0px 0px 10px */
+}
+
+.dialog-pane > .button-bar > .container > .details-button {
+    -fx-alignment: baseline-left;
+    -fx-focus-traversable: false;
+    -fx-padding: 0.416em; /* 5px */
+    /*  -fx-background-color: linear-gradient(#74b20e 0,#5b8c0b 100%);*/
+}
+
+.dialog-pane > .button-bar > .container > .button {
+/*    -fx-fill: red;
+    -fx-background-color: red;*/
+}
+
+/* =========== */
+.dialog-pane > .button-bar > .container > .button {
+    -fx-cursor: hand;
+    -fx-focus-color: transparent;
+    -fx-text-fill: -imgur-default-text-color;
+    -fx-background-color: linear-gradient(rgb(116, 178, 14) 0px, rgb(91, 140, 11) 100%);
+    -fx-background-insets: 0;
+    -fx-background-radius: 4;
+    /*-fx-border-width: 1px;*/
+    -fx-border-color: rgb(166, 238, 50) rgb(66, 102, 8) rgb(66, 102, 8) rgba(0, 0, 0, 0) !important;
+    -fx-border-radius: 4;
+    -fx-padding: 3 10 3 10;
+}
+.dialog-pane > .button-bar > .container > .button .text {
+    -fx-font-weight: 650;
+}
+.dialog-pane > .button-bar > .container > .button:focused {
+    -fx-focus-color: transparent;
+}
+.dialog-pane > .button-bar > .container > .button Text {
+    -fx-fill: -imgur-default-text-color;
+}
+.dialog-pane > .button-bar > .container > .button:armed {
+    -fx-text-fill: derive(-imgur-default-text-color, -80%);
+    -fx-background-color: linear-gradient(rgb(91, 140, 11) 0px, rgb(116, 178, 14) 100%);
+}
+/* =========== */
+
+.dialog-pane > .button-bar > .container > .details-button.more {
+    /*-fx-graphic: url("dialog-more-details.png");*/
+}
+
+.dialog-pane > .button-bar > .container > .details-button.less {
+    /*-fx-graphic: url("dialog-fewer-details.png");*/
+}
+
+.dialog-pane > .button-bar > .container > .details-button:hover {
+    -fx-underline: true;
+}
+
+.alert.confirmation.dialog-pane,
+.text-input-dialog.dialog-pane,
+.choice-dialog.dialog-pane {
+    /*-fx-graphic: url("dialog-confirm.png");*/
+}
+
+.alert.information.dialog-pane {
+    /*-fx-graphic: url("dialog-information.png");*/
+}
+
+.alert.error.dialog-pane {
+    /*-fx-graphic: url("dialog-error.png");*/
+}
+
+.alert.warning.dialog-pane {
+    /*-fx-graphic: url("dialog-warning.png");*/
 }

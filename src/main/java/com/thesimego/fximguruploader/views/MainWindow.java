@@ -1,31 +1,27 @@
 package com.thesimego.fximguruploader.views;
 
+import com.thesimego.fximguruploader.Main;
 import com.j256.ormlite.stmt.PreparedQuery;
-import com.thesimego.framework.jfx.builder.TooltipBuilder;
+import com.thesimego.framework.jfx.BaseWindow;
 import com.thesimego.framework.jfx.builder.TableBuilder;
+import com.thesimego.framework.jfx.builder.TooltipBuilder;
 import com.thesimego.framework.jfx.components.GroupBox;
 import com.thesimego.framework.jfx.tools.FxDialogs;
-import com.thesimego.framework.sqlite.ORMLite;
 import com.thesimego.fximguruploader.entity.AccessTokenEN;
 import com.thesimego.fximguruploader.entity.AlbumEN;
 import com.thesimego.fximguruploader.entity.ImageEN;
 import com.thesimego.fximguruploader.entity.PreferencesEN;
 import com.thesimego.fximguruploader.entity.imgur.Basic;
-import com.thesimego.fximguruploader.test.HttpCookieHandler;
 import com.thesimego.fximguruploader.tools.Functions;
+import com.thesimego.fximguruploader.tools.ImgurClient;
 import com.thesimego.fximguruploader.tools.Locations;
-import com.thesimego.fximguruploader.tools.ImgurClient.ImgurV3Image;
-import com.thesimego.fximguruploader.tools.ImgurClient.ImgurV3ImageRequest;
 import de.jensd.fx.glyphs.GlyphsDude;
 import de.jensd.fx.glyphs.fontawesome.FontAwesomeIcon;
-import flexjson.JSONDeserializer;
 import java.awt.AWTException;
 import java.awt.Desktop;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.URI;
@@ -35,21 +31,18 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
-import java.util.ResourceBundle;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -61,11 +54,15 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.ToolBar;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
@@ -73,28 +70,19 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import javax.imageio.ImageIO;
-import net.coobird.thumbnailator.Thumbnails;
-import org.controlsfx.control.action.Action;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
-import javafx.scene.image.Image;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.geometry.Bounds;
-import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 
 /**
  *
- * @author Simego
+ * @author drafaelli
  */
-public class Main extends Application {
+public final class MainWindow extends BaseWindow {
 
     private Button startButton;
     private Button stopButton;
@@ -114,103 +102,16 @@ public class Main extends Application {
     private TableView<ImageEN> imageTable;
     private TableView<AlbumEN> albumTable;
 
-    private NativeKeyListener printScreenListener;
-
     private double xOffset = 0;
     private double yOffset = 0;
 
-    private Stage primaryStage;
     private CookieManager manager;
 
     private AccessTokenEN loggedUser;
 
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String[] args) {
-        launch(args);
-    }
-
-    @Override
-    public void start(Stage primaryStage) {
-        this.primaryStage = primaryStage;
-        setUserAgentStylesheet(STYLESHEET_CASPIAN);
-        primaryStage.initStyle(StageStyle.TRANSPARENT);
-
-        System.setProperty("java.net.useSystemProxies", "true");
-
-        /* ==== DATABASE ==== */
-        try {
-            ORMLite.openConnection();
-        } catch (SQLException ex) {
-            String msg = "Failed connecting to the Database.";
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
-            if (showConfirmDialog("Error", msg + "\nThe program will now close.\nPlease contact the developers for help and more information.").equals(FxDialogs.OK)) {
-                primaryStage.close();
-            }
-        }
-
-        ResourceBundle bundle = ResourceBundle.getBundle("messages", new Locale("en", "US"));
-//        System.out.println(bundle.getBaseBundleName());
-//        System.out.println(bundle.getString("test"));
-
-        /*
-         String e = "{\"data\":{\"error\":\"Fake Error\",\"request\":\"\\/3\\/account\\/imgur\\/images.json\",\"method\":\"GET\"},\"success\":true,\"status\":\"200\"}";
-         String t = "{\"data\":{\"id\":\"T4njaMC\",\"title\":\"teste dev 2\",\"description\":null,\"datetime\":1438627005,\"type\":\"image/jpeg\",\"animated\":false,\"width\":1920,\"height\":1080,\"size\":145241,\"views\":0,\"bandwidth\":0,\"vote\":null,\"favorite\":false,\"nsfw\":null,\"section\":null,\"account_url\":null,\"account_id\":9042594,\"comment_preview\":null,\"deletehash\":\"R8e8ZGwev52phEx\",\"name\":\"\",\"link\":\"http://i.imgur.com/T4njaMC.jpg\"},\"success\":true,\"status\":200}";
-         String d = "{\"id\":\"T4njaMC\",\"title\":\"teste dev 2\",\"description\":null,\"datetime\":1438627005,\"type\":\"image/jpeg\",\"animated\":false,\"width\":1920,\"height\":1080,\"size\":145241,\"views\":0,\"bandwidth\":0,\"vote\":null,\"favorite\":false,\"nsfw\":null,\"section\":null,\"account_url\":null,\"account_id\":9042594,\"comment_preview\":null,\"deletehash\":\"R8e8ZGwev52phEx\",\"name\":\"\",\"link\":\"http://i.imgur.com/T4njaMC.jpg\"}";
-         Basic basic = new JSONDeserializer<Basic>().use("data", ImgurImage.class).deserialize(t, Basic.class);
-         System.out.println(basic);*/
-//        AccessTokenEN e = AccessTokenEN.getByAccountId(9042594L);
-//        Calendar cal = Calendar.getInstance();
-//        cal.add(Calendar.DAY_OF_MONTH, -3);
-//        e.setLastUpdate(cal.getTime());
-//        
-//        try {
-//            AccessTokenEN.dao.update(e);
-//        } catch (SQLException ex) {
-//            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-        // Clear previous logging configurations.
-        LogManager.getLogManager().reset();
-
-        // Get the logger for "org.jnativehook" and set the level to off.
-        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
-        logger.setLevel(Level.OFF);
-
-        try {
-            if (!Files.exists(Paths.get(Locations.HOME))) {
-                Files.createDirectory(Paths.get(Locations.HOME));
-            }
-            if (!Files.exists(Paths.get(Locations.IMAGE_FOLDER))) {
-                Files.createDirectory(Paths.get(Locations.IMAGE_FOLDER));
-                if (!Files.exists(Paths.get(Locations.THUMBNAIL_FOLDER))) {
-                    Files.createDirectory(Paths.get(Locations.THUMBNAIL_FOLDER));
-                }
-            }
-
-            manager = new CookieManager();
-            CookieHandler.setDefault(manager);
-
-            if (Files.exists(Paths.get(Locations.COOKIE_FILE))) {
-                JSONDeserializer<List<HttpCookieHandler>> deserializer = new JSONDeserializer<>();
-                List<HttpCookieHandler> cookies = deserializer.use("values", HttpCookieHandler.class).deserialize(new FileReader(new File(Locations.COOKIE_FILE)));
-                cookies.stream().forEach((ch) -> {
-                    HttpCookie cookie = ch.getCookie();
-                    if (cookie != null) {
-                        try {
-                            manager.getCookieStore().add(new URI(ch.getDomain()), cookie);
-                        } catch (URISyntaxException ex) {
-                            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    }
-                });
-
-            }
-
-        } catch (IOException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Unable to create image folder, please try again.", ex);
-        }
-
+    public MainWindow() {
+        initStyle(StageStyle.TRANSPARENT);
+        
         Platform.runLater(() -> {
             populate();
         });
@@ -228,49 +129,36 @@ public class Main extends Application {
         HBox upperCenter = new HBox(getConsoleBox(), getAlbumBox());
         upperCenter.getStyleClass().add("upper-center-pane");
 
-        // ===
         BorderPane toolBarPane = new BorderPane();
         toolBarPane.getStyleClass().add("toolbar-custom-pane");
 
         ToolBar toolBarLeft = new ToolBar();
         toolBarLeft.getItems().addAll(getStartButton(), getStopButton(), getUploadButton());
-//        ToolBar toolBarCenter = new ToolBar();
-//        toolBarCenter.getItems().addAll(getLoginBox());
+
         ToolBar toolBarRight = new ToolBar();
         toolBarRight.getItems().addAll(getLoginBox(), getMinimizeButton(), getCloseButton());
 
-//        toolBarLeft.setPrefHeight(60);
-//        toolBarRight.setPrefHeight(60);
         toolBarLeft.setOnMousePressed((MouseEvent event) -> {
-            xOffset = primaryStage.getX() - event.getScreenX();
-            yOffset = primaryStage.getY() - event.getScreenY();
+            xOffset = this.getX() - event.getScreenX();
+            yOffset = this.getY() - event.getScreenY();
         });
         toolBarLeft.setOnMouseDragged((MouseEvent event) -> {
-            primaryStage.setX(event.getScreenX() + xOffset);
-            primaryStage.setY(event.getScreenY() + yOffset);
+            this.setX(event.getScreenX() + xOffset);
+            this.setY(event.getScreenY() + yOffset);
         });
-//        toolBarCenter.setOnMousePressed((MouseEvent event) -> {
-//            xOffset = primaryStage.getX() - event.getScreenX();
-//            yOffset = primaryStage.getY() - event.getScreenY();
-//        });
-//        toolBarCenter.setOnMouseDragged((MouseEvent event) -> {
-//            primaryStage.setX(event.getScreenX() + xOffset);
-//            primaryStage.setY(event.getScreenY() + yOffset);
-//        });
+
         toolBarRight.setOnMousePressed((MouseEvent event) -> {
-            xOffset = primaryStage.getX() - event.getScreenX();
-            yOffset = primaryStage.getY() - event.getScreenY();
+            xOffset = this.getX() - event.getScreenX();
+            yOffset = this.getY() - event.getScreenY();
         });
         toolBarRight.setOnMouseDragged((MouseEvent event) -> {
-            primaryStage.setX(event.getScreenX() + xOffset);
-            primaryStage.setY(event.getScreenY() + yOffset);
+            this.setX(event.getScreenX() + xOffset);
+            this.setY(event.getScreenY() + yOffset);
         });
 
         toolBarPane.setCenter(toolBarLeft);
-//        toolBarPane.setCenter(toolBarCenter);
         toolBarPane.setRight(toolBarRight);
 
-//        BorderPane.setAlignment(toolBarLeft, Pos.BASELINE_LEFT);
         borderPane.setTop(toolBarPane);
 
         center.getChildren().addAll(
@@ -284,91 +172,89 @@ public class Main extends Application {
         scene.setFill(Color.TRANSPARENT);
         scene.getStylesheets().add("css/styles.css");
 
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("ImgurUploader");
-        primaryStage.getIcons().add(new Image("img/icon.png"));
-        primaryStage.show();
-        primaryStage.setHeight(root.getHeight());
-        primaryStage.setWidth(850);
+        this.setScene(scene);
+        this.setTitle("ImgurUploader");
+        this.getIcons().add(new Image("img/icon.png"));
+        this.show();
+        this.setHeight(root.getHeight());
+        this.setWidth(850);
 
-//        primaryStage.setHeight(637);
-//        ResizeHelper.addResizeListener(primaryStage);
-//        primaryStage.setResizable(false);
-        /* ================= */
-//        populate();
-        /* */
-        getLockPane();
+//        this.setHeight(637);
+//        ResizeHelper.addResizeListener(this);
+//        this.setResizable(false);
+        
+        getLockPane(); // load 'loading' gif
 
-        scene.setOnDragOver(new EventHandler<DragEvent>() {
-            @Override
-            public void handle(DragEvent event) {
-                Dragboard db = event.getDragboard();
-                if (db.hasFiles() || db.hasUrl() || db.hasImage()) {
-                    event.acceptTransferModes(TransferMode.ANY);
-                } else {
-                    event.consume();
-                }
-            }
-        });
-
-        // Dropping over surface
-        scene.setOnDragDropped(new EventHandler<DragEvent>() {
-            @Override
-            public void handle(DragEvent event) {
-                Dragboard db = event.getDragboard();
-                boolean success = false;
-                if (db.hasFiles()) {
-                    for (File file : db.getFiles()) {
-                        String filePath = file.getAbsolutePath();
-                        if (file.getName().matches(".*\\.(jpg|jpeg|png|bmp|)")) {
-                            Image image = new Image(file.toURI().toString());
-                            try {
-                                String split[] = filePath.split("\\.");
-                                String extension = split[split.length - 1];
-                                if (image.getException() != null) {
-                                    showErrorDialog(image.getException().getMessage());
-                                }
-                                ImageEN imageEN = createImage(SwingFXUtils.fromFXImage(image, null), extension);
-                            } catch (SQLException | IOException ex) {
-                                String msg = "There was a problem saving the image.";
-                                showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
-                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
-                            }
-                        }
-                    }
-                    success = true;
-                } else if (db.hasUrl()) {
-                    BufferedImage image;
-                    try {
-                        URL url = new URL(db.getUrl());
-                        URLConnection conn = url.openConnection();
-                        String extension = conn.getContentType().split("/")[1];
-                        image = ImageIO.read(url);
-                        ImageEN imageEN = createImage(image, extension);
-                    } catch (SQLException | IOException ex) {
-                        String msg = "There was a problem saving the image from the URL.";
-                        showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
-                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
-                    }
-                    success = true;
-                } else if (db.hasImage()) {
-                    Image image = db.getImage();
-                    try {
-                        ImageEN imageEN = createImage(SwingFXUtils.fromFXImage(image, null), "png");
-                    } catch (SQLException | IOException ex) {
-                        String msg = "There was a problem saving the image.";
-                        showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
-                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
-                    }
-                    success = true;
-                }
-                event.setDropCompleted(success);
+        // Enable Drag & Drop
+        scene.setOnDragOver((DragEvent event) -> {
+            Dragboard db = event.getDragboard();
+            if (db.hasFiles() || db.hasUrl() || db.hasImage()) {
+                event.acceptTransferModes(TransferMode.ANY);
+            } else {
                 event.consume();
             }
         });
 
+        // Dropping over surface
+        scene.setOnDragDropped((DragEvent event) -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (db.hasFiles()) {
+                for (File file : db.getFiles()) {
+                    String filePath = file.getAbsolutePath();
+                    if (file.getName().matches(".*\\.(jpg|jpeg|png|bmp|)")) {
+                        Image image = new Image(file.toURI().toString());
+                        try {
+                            String split[] = filePath.split("\\.");
+                            String extension = split[split.length - 1];
+                            if (image.getException() != null) {
+                                FxDialogs.showErrorDialog(image.getException().getMessage());
+                            }
+                            ImageEN imageEN = ImageEN.createImage(SwingFXUtils.fromFXImage(image, null), extension);
+                            getImageTable().getItems().add(0, imageEN);
+                        } catch (SQLException | IOException ex) {
+                            String msg = "There was a problem saving the image.";
+                            FxDialogs.showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
+                            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
+                        }
+                    }
+                }
+                success = true;
+            } else if (db.hasUrl()) {
+                BufferedImage image;
+                try {
+                    URL url = new URL(db.getUrl());
+                    URLConnection conn = url.openConnection();
+                    String extension = conn.getContentType().split("/")[1];
+                    image = ImageIO.read(url);
+                    ImageEN imageEN = ImageEN.createImage(image, extension);
+                    getImageTable().getItems().add(0, imageEN);
+                } catch (SQLException | IOException ex) {
+                    String msg = "There was a problem saving the image from the URL.";
+                    FxDialogs.showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
+                }
+                success = true;
+            } else if (db.hasImage()) {
+                Image image = db.getImage();
+                try {
+                    ImageEN imageEN = ImageEN.createImage(SwingFXUtils.fromFXImage(image, null), "png");
+                    getImageTable().getItems().add(0, imageEN);
+                } catch (SQLException | IOException ex) {
+                    String msg = "There was a problem saving the image.";
+                    FxDialogs.showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
+                    Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
+                }
+                success = true;
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
     }
-
+    
+    /**
+     * 
+     */
     private void populate() {
         try {
             // Image
@@ -393,10 +279,14 @@ public class Main extends Application {
         } catch (SQLException ex) {
             String msg = "An error ocurred loading data from database.";
             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
-            showErrorDialog(msg, "Please if the error persist, try deleting the local database (imguruploader.db). (data will be lost)\nOr try contacting the developer.");
+            FxDialogs.showErrorDialog(msg, "Please if the error persist, try deleting the local database (imguruploader.db). (data will be lost)\nOr try contacting the developer.");
         }
     }
 
+    /**
+     * 
+     * @return 
+     */
     public Button getStartButton() {
         if (startButton == null) {
             startButton = GlyphsDude.createIconButton(FontAwesomeIcon.PLAY, "", "28", "0", ContentDisplay.CENTER);
@@ -410,7 +300,7 @@ public class Main extends Application {
                     GlobalScreen.addNativeKeyListener(getPrintScreenListener());
                     GlobalScreen.registerNativeHook();
                 } catch (NativeHookException ex) {
-                    showErrorDialog("There was a problem registering the native hook.");
+                    FxDialogs.showErrorDialog("There was a problem registering the native hook.");
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "There was a problem registering the native hook.", ex);
                 }
 
@@ -419,6 +309,10 @@ public class Main extends Application {
         return startButton;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public Button getStopButton() {
         if (stopButton == null) {
             stopButton = GlyphsDude.createIconButton(FontAwesomeIcon.STOP, "", "28", "0", ContentDisplay.CENTER);
@@ -433,7 +327,7 @@ public class Main extends Application {
                     GlobalScreen.removeNativeKeyListener(getPrintScreenListener());
                     GlobalScreen.unregisterNativeHook();
                 } catch (NativeHookException ex) {
-                    showErrorDialog("There was a problem registering the native hook.");
+                    FxDialogs.showErrorDialog("There was a problem registering the native hook.");
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "There was a problem registering the native hook.", ex);
                 }
             });
@@ -441,30 +335,42 @@ public class Main extends Application {
         return stopButton;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public Button getMinimizeButton() {
         if (minimizeButton == null) {
             minimizeButton = GlyphsDude.createIconButton(FontAwesomeIcon.MINUS, "", "28", "0", ContentDisplay.CENTER);
             minimizeButton.getStyleClass().addAll("toolbar-button-transparent", "default-green-button");
             TooltipBuilder.create("Minimize", minimizeButton);
             minimizeButton.setOnAction((ActionEvent event) -> {
-                primaryStage.setIconified(true);
+                this.setIconified(true);
             });
         }
         return minimizeButton;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public Button getCloseButton() {
         if (closeButton == null) {
             closeButton = GlyphsDude.createIconButton(FontAwesomeIcon.POWER_OFF, "", "28", "0", ContentDisplay.CENTER);
             closeButton.getStyleClass().addAll("toolbar-button-transparent", "default-green-button");
             TooltipBuilder.create("Close", closeButton);
             closeButton.setOnAction((ActionEvent event) -> {
-                primaryStage.close();
+                this.close();
             });
         }
         return closeButton;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public TableView<ImageEN> getImageTable() {
         if (imageTable == null) {
             imageTable = TableBuilder
@@ -478,7 +384,7 @@ public class Main extends Application {
                     .onClick((EventHandler<MouseEvent>) event -> {
                         if (event.getClickCount() == 2) {
                             ImageEN entity = imageTable.getSelectionModel().getSelectedItem();
-                            // Ignora se for nulo ou nÃ£o tiver link
+                            // Ignora se for nulo ou nÃƒÂ£o tiver link
                             if (entity == null || entity.getLink() == null) {
                                 return;
                             }
@@ -505,7 +411,7 @@ public class Main extends Application {
             // Delete listener
             imageTable.setOnKeyPressed((KeyEvent event) -> {
                 ImageEN image = imageTable.getSelectionModel().getSelectedItem();
-                if (event.getCode() == KeyCode.DELETE && showConfirmDialog("Delete Image", "Do you want to delete this image?").equals(FxDialogs.YES)) {
+                if (event.getCode() == KeyCode.DELETE && FxDialogs.showConfirmDialog(this, "Delete Image", "Do you want to delete this image?").equals(FxDialogs.YES)) {
                     Callback<Basic, Void> callback = (Basic param) -> {
                         Platform.runLater(() -> {
                             try {
@@ -527,7 +433,7 @@ public class Main extends Application {
                         lockScreen();
                         new Thread(() -> {
                             try {
-                                ImgurV3Image.execute(ImgurV3ImageRequest.DELETE, image, null, callback);
+                                ImgurClient.ImgurV3Image.execute(ImgurClient.ImgurV3ImageRequest.DELETE, image, null, callback);
                             } catch (IOException ex) {
                                 // TODO log to console
                                 Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
@@ -543,6 +449,10 @@ public class Main extends Application {
         return imageTable;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public TableView<AlbumEN> getAlbumTable() {
         if (albumTable == null) {
             albumTable = TableBuilder
@@ -556,6 +466,10 @@ public class Main extends Application {
         return albumTable;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public TextArea getConsole() {
         if (console == null) {
             console = new TextArea();
@@ -566,6 +480,10 @@ public class Main extends Application {
         return console;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public GroupBox getImageBox() {
         if (imageBox == null) {
             imageBox = new GroupBox("Images", getImageTable());
@@ -573,6 +491,10 @@ public class Main extends Application {
         return imageBox;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public GroupBox getAlbumBox() {
         if (albumBox == null) {
             albumBox = new GroupBox("Albums", getAlbumTable());
@@ -580,6 +502,10 @@ public class Main extends Application {
         return albumBox;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public GroupBox getConsoleBox() {
         if (consoleBox == null) {
             consoleBox = new GroupBox("Console", getConsole());
@@ -587,6 +513,10 @@ public class Main extends Application {
         return consoleBox;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public HBox getLoginBox() {
         if (loginBox == null) {
             loginBox = new HBox(10, getSignInButton());
@@ -594,12 +524,16 @@ public class Main extends Application {
         return loginBox;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public Button getSignInButton() {
         if (signInButton == null) {
             signInButton = new Button("sign in");
             signInButton.getStyleClass().addAll("toolbar-button-transparent", "default-green-button");
             signInButton.setOnAction((ActionEvent event) -> {
-                new AuthenticationWindow(primaryStage, (AccessTokenEN accessToken) -> {
+                new AuthenticationWindow(this, (AccessTokenEN accessToken) -> {
                     doLogin(accessToken);
                     return null;
                 }).showAndWait();
@@ -608,6 +542,10 @@ public class Main extends Application {
         return signInButton;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public Button getLoggedButton() {
         if (loggedButton == null) {
             loggedButton = new Button();
@@ -656,12 +594,12 @@ public class Main extends Application {
             final ContextMenu contextMenu = new ContextMenu(new CustomMenuItem(getCheckBoxOpenLink(), false), browser, logoutMenu);
             contextMenu.getStyleClass().add("context-menu-user");
 
-            primaryStage.getScene().addEventFilter(MouseEvent.MOUSE_MOVED, (MouseEvent event) -> {
+            this.getScene().addEventFilter(MouseEvent.MOUSE_MOVED, (MouseEvent event) -> {
                 Bounds buttonBounds = getLoggedButton().localToScene(getLoggedButton().getLayoutBounds());
                 if (buttonBounds.contains(event.getSceneX(), event.getSceneY()) /*|| popupBounds.contains(event.getSceneX(), event.getSceneY())*/) {
                     if (!contextMenu.isShowing() && !getLockPane().isVisible()) { // only if the lockpane is not visible
                         Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
-                        contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
+                        contextMenu.show(this, p2d.getX(), p2d.getY());
                     }
                 } else if (contextMenu.isShowing()) {
                     contextMenu.hide();
@@ -669,16 +607,20 @@ public class Main extends Application {
             });
             /*loggedButton.setOnMouseEntered((MouseEvent event) -> {
              Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
-             contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
+             contextMenu.show(this, p2d.getX(), p2d.getY());
              });
              loggedButton.setOnMouseClicked((MouseEvent event) -> {
              Point2D p2d = loggedButton.localToScreen(loggedButton.getLayoutBounds().getMaxX() - loggedButton.getWidth(), loggedButton.getLayoutBounds().getMaxY());
-             contextMenu.show(primaryStage, p2d.getX(), p2d.getY());
+             contextMenu.show(this, p2d.getX(), p2d.getY());
              });*/
         }
         return loggedButton;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public CheckBox getCheckBoxOpenLink() {
         if (checkBoxOpenLink == null) {
             checkBoxOpenLink = new CheckBox("On - Open in Browser\nOff - Copy to Clipboard");
@@ -687,6 +629,10 @@ public class Main extends Application {
         return checkBoxOpenLink;
     }
 
+    /**
+     * 
+     * @return 
+     */
     public Button getUploadButton() {
         if (uploadButton == null) {
             uploadButton = GlyphsDude.createIconButton(FontAwesomeIcon.CLOUD_UPLOAD, "upload image", "24", "15", ContentDisplay.LEFT);
@@ -703,13 +649,13 @@ public class Main extends Application {
 
                 new Thread(() -> {
                     try {
-                        ImgurV3Image.execute(ImgurV3ImageRequest.UPLOAD, image, null, (Basic param) -> {
+                        ImgurClient.ImgurV3Image.execute(ImgurClient.ImgurV3ImageRequest.UPLOAD, image, null, (Basic param) -> {
                             Platform.runLater(() -> {
                                 if (param.getSuccess()) {
                                     // Print info to console
                                     //Dialogs.create().lightweight().styleClass(Dialog.STYLE_CLASS_CROSS_PLATFORM).title("Upload").masthead("Your image has been uploaded.").showInformation();
                                 } else {
-                                    showErrorDialog("There was a problem uploading your image, please try again.");
+                                    FxDialogs.showErrorDialog("There was a problem uploading your image, please try again.");
                                 }
                                 getImageTable().getColumns().get(0).setVisible(false);
                                 getImageTable().getColumns().get(0).setVisible(true);
@@ -720,7 +666,7 @@ public class Main extends Application {
                     } catch (IOException ex) {
                         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                         Platform.runLater(() -> {
-                            showErrorDialog(ex.getMessage());
+                            FxDialogs.showErrorDialog(ex.getMessage());
                         });
                     } finally {
                         unlockScreen();
@@ -731,25 +677,39 @@ public class Main extends Application {
         return uploadButton;
     }
 
+    /**
+     * 
+     */
     public void lockScreen() {
         getLockPane().setVisible(true);
     }
 
+    /**
+     * 
+     */
     public void unlockScreen() {
         getLockPane().setVisible(false);
     }
 
+    /**
+     * 
+     * @return 
+     */
     public StackPane getLockPane() {
         if (lockPane == null) {
             lockPane = new StackPane();
             lockPane.setVisible(false);
             lockPane.setStyle("-fx-background-color: rgba(50,50,50,0.6); -fx-background-radius: 10px;");
-            ((StackPane) primaryStage.getScene().getRoot()).getChildren().add(lockPane);
+            ((StackPane) this.getScene().getRoot()).getChildren().add(lockPane);
             lockPane.getChildren().add(new ImageView(new Image("img/loading-gallery.gif", 100, 100, true, true)));
         }
         return lockPane;
     }
 
+    /**
+     * 
+     * @param accessToken 
+     */
     private void doLogin(AccessTokenEN accessToken) {
         try {
             PreparedQuery query = AccessTokenEN.dao.queryBuilder().where().eq(AccessTokenEN.ACCOUNT_ID, accessToken.getAccountId()).prepare();
@@ -781,6 +741,10 @@ public class Main extends Application {
         }
     }
 
+    /**
+     * 
+     * @param user 
+     */
     private void updateLoggedButton(AccessTokenEN user) {
         if (user == null) {
             getLoggedButton().setText(null);
@@ -795,6 +759,9 @@ public class Main extends Application {
         updateUploadButton();
     }
 
+    /**
+     * 
+     */
     private void updateUploadButton() {
         ImageEN image = getImageTable().getSelectionModel().getSelectedItem();
         if (image == null || loggedUser == null) {
@@ -804,31 +771,21 @@ public class Main extends Application {
         }
     }
 
-    public void showErrorDialog(String message) {
-        FxDialogs.showError("Error", message);
-    }
-
-    public void showErrorDialog(String masthead, String message) {
-        FxDialogs.showError("Error", masthead + "\n" + message);
-    }
-
-    public String showConfirmDialog(String title, String message) {
-        return FxDialogs.showConfirm(primaryStage, title, message, FxDialogs.YES, FxDialogs.NO);
-    }
-
-    private NativeKeyListener getPrintScreenListener() {
+    private NativeKeyListener printScreenListener;
+    public NativeKeyListener getPrintScreenListener() {
         if (printScreenListener == null) {
             printScreenListener = new NativeKeyListener() {
                 @Override
                 public void nativeKeyReleased(NativeKeyEvent nke) {
-//                    System.out.println("Key Pressed: " + nke.paramString());
+                    //System.out.println("Key Pressed: " + nke.paramString());
                     if (nke.getKeyCode() == NativeKeyEvent.VC_PRINTSCREEN) {
-//                        System.out.println("Screen Printed!");
+                        //System.out.println("Screen Printed!");
                         try {
-                            ImageEN image = createImage(Functions.getScreenBufferedImage(), "png");
+                            ImageEN image = ImageEN.createImage(Functions.getScreenBufferedImage(), "png");
+                            getImageTable().getItems().add(0, image);
                         } catch (AWTException | IOException | SQLException ex) {
                             String msg = "There was a problem saving the screenshot.";
-                            showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
+                            FxDialogs.showErrorDialog(msg, "Please try again, maybe restarting the application will solve the issue.");
                             Logger.getLogger(Main.class.getName()).log(Level.SEVERE, msg, ex);
                         }
                     }
@@ -836,62 +793,16 @@ public class Main extends Application {
 
                 @Override
                 public void nativeKeyPressed(NativeKeyEvent nke) {
-//                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Locations | Templates.
+                    //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Locations | Templates.
                 }
 
                 @Override
                 public void nativeKeyTyped(NativeKeyEvent nke) {
-//                        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Locations | Templates.
+                    //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Locations | Templates.
                 }
             };
         }
         return printScreenListener;
     }
-
-    /**
-     *
-     * @param bi
-     * @param ext
-     * @return
-     * @throws SQLException
-     * @throws IOException
-     * @throws AWTException
-     */
-    private ImageEN createImage(BufferedImage bi, String ext) throws SQLException, IOException {
-        String filename = new SimpleDateFormat("yyyy-MM-ddHH-mm-ss").format(new Date()) + "." + ext;
-        File outputfile = new File(Locations.image(filename));
-        ImageIO.write(bi, ext, outputfile);
-        File outputfileThumbnail = new File(Locations.thumbnail(filename));
-        Thumbnails
-                .of(bi)
-                .size(150, 150)
-                .outputFormat(ext)
-                .toFile(outputfileThumbnail);
-        ImageEN image = new ImageEN();
-        image.setFilename(filename);
-        image.setDate(new Date());
-        ImageEN.dao.create(image);
-
-        getImageTable().getItems().add(0, image);
-        return image;
-    }
-
-    @Override
-    public void stop() throws Exception {
-        try {
-            ORMLite.closeConnection();
-        } catch (SQLException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "Failed disconnecting the Database.", ex);
-        }
-        try {
-            if (GlobalScreen.isNativeHookRegistered()) {
-                GlobalScreen.removeNativeKeyListener(getPrintScreenListener());
-                GlobalScreen.unregisterNativeHook();
-            }
-        } catch (NativeHookException ex) {
-            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, "There was a problem unregistering the native hook.", ex);
-        }
-        super.stop();
-    }
-
+    
 }
