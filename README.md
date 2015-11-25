@@ -18,6 +18,7 @@ The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** bu
 
 # Preview
 ![](http://i.imgur.com/PeyesgA.png)
+![](http://i.imgur.com/66UyHTI.png)
 
 ### Changelog
 #### v0.4.0
