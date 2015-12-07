@@ -6,6 +6,7 @@ import com.thesimego.framework.jfx.BaseWindow;
 import com.thesimego.framework.jfx.builder.TableBuilder;
 import com.thesimego.framework.jfx.builder.TooltipBuilder;
 import com.thesimego.framework.jfx.components.GroupBox;
+import com.thesimego.framework.jfx.components.TSwitch;
 import com.thesimego.framework.jfx.tools.FxDialogs;
 import com.thesimego.fximguruploader.entity.AccessTokenEN;
 import com.thesimego.fximguruploader.entity.AlbumEN;
@@ -32,7 +33,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -49,7 +49,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
@@ -71,6 +70,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 import javax.imageio.ImageIO;
 import org.jnativehook.GlobalScreen;
@@ -98,6 +98,8 @@ public final class MainWindow extends BaseWindow {
     private HBox loginBox;
     private CheckBox checkBoxOpenLink;
     private StackPane lockPane;
+    private TSwitch autoUploadToggle;
+    private ContextMenu imageTableMenu;
 
     private TableView<ImageEN> imageTable;
     private TableView<AlbumEN> albumTable;
@@ -105,17 +107,17 @@ public final class MainWindow extends BaseWindow {
     private double xOffset = 0;
     private double yOffset = 0;
 
-    private CookieManager manager;
+    private final CookieManager manager = (CookieManager)CookieManager.getDefault();
 
     private AccessTokenEN loggedUser;
 
     public MainWindow() {
-        initStyle(StageStyle.TRANSPARENT);
         
         Platform.runLater(() -> {
             populate();
         });
 
+        initStyle(StageStyle.TRANSPARENT);
         StackPane root = new StackPane();
         root.getStyleClass().add("main-borderpane");
 
@@ -133,7 +135,7 @@ public final class MainWindow extends BaseWindow {
         toolBarPane.getStyleClass().add("toolbar-custom-pane");
 
         ToolBar toolBarLeft = new ToolBar();
-        toolBarLeft.getItems().addAll(getStartButton(), getStopButton(), getUploadButton());
+        toolBarLeft.getItems().addAll(getStartButton(), getStopButton(), getUploadButton(), getAutoUploadToggle());
 
         ToolBar toolBarRight = new ToolBar();
         toolBarRight.getItems().addAll(getLoginBox(), getMinimizeButton(), getCloseButton());
@@ -175,14 +177,18 @@ public final class MainWindow extends BaseWindow {
         this.setScene(scene);
         this.setTitle("ImgurUploader");
         this.getIcons().add(new Image("img/icon.png"));
-        this.show();
-        this.setHeight(root.getHeight());
-        this.setWidth(850);
+//        this.show();
+//        this.setHeight(root.getHeight());
+//        this.setWidth(850);
+        this.setOnShown(windowEvent ->{
+            this.setHeight(root.getHeight());
+            this.setWidth(850);
+        });
 
 //        this.setHeight(637);
 //        ResizeHelper.addResizeListener(this);
 //        this.setResizable(false);
-        
+
         getLockPane(); // load 'loading' gif
 
         // Enable Drag & Drop
@@ -335,6 +341,13 @@ public final class MainWindow extends BaseWindow {
         return stopButton;
     }
 
+    public TSwitch getAutoUploadToggle() {
+        if(autoUploadToggle == null) {
+            autoUploadToggle = new TSwitch("Auto Upload");
+        }
+        return autoUploadToggle;
+    }
+
     /**
      * 
      * @return 
@@ -384,22 +397,22 @@ public final class MainWindow extends BaseWindow {
                     .onClick((EventHandler<MouseEvent>) event -> {
                         if (event.getClickCount() == 2) {
                             ImageEN entity = imageTable.getSelectionModel().getSelectedItem();
-                            // Ignora se for nulo ou nÃƒÂ£o tiver link
-                            if (entity == null || entity.getLink() == null) {
+                            if(entity == null) {
                                 return;
                             }
-                            // Inicia no browser ou copia o link
-                            if (getCheckBoxOpenLink().isSelected()) {
+                            // Open photo
+                            if (entity.getLink() == null) {
+                                try {
+                                    Desktop.getDesktop().open(new File(Locations.image(entity.getFilename())));
+                                } catch (IOException ex) {
+                                    Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+                                }
+                            } else {
                                 try {
                                     Desktop.getDesktop().browse(new URI(entity.getLink()));
                                 } catch (URISyntaxException | IOException ex) {
                                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                                 }
-                            } else {
-                                final Clipboard clipboard = Clipboard.getSystemClipboard();
-                                final ClipboardContent content = new ClipboardContent();
-                                content.put(DataFormat.PLAIN_TEXT, entity.getLink());
-                                clipboard.setContent(content);
                             }
                         }
                     })
@@ -411,42 +424,63 @@ public final class MainWindow extends BaseWindow {
             // Delete listener
             imageTable.setOnKeyPressed((KeyEvent event) -> {
                 ImageEN image = imageTable.getSelectionModel().getSelectedItem();
-                if (event.getCode() == KeyCode.DELETE && FxDialogs.showConfirmDialog(this, "Delete Image", "Do you want to delete this image?").equals(FxDialogs.YES)) {
-                    Callback<Basic, Void> callback = (Basic param) -> {
-                        Platform.runLater(() -> {
-                            try {
-                                Files.delete(Paths.get(Locations.image(image.getFilename())));
-                                Files.delete(Paths.get(Locations.thumbnail(image.getFilename())));
-                                ImageEN.dao.delete(image);
-                                imageTable.getItems().remove(image);
-                            } catch (SQLException | IOException ex) {
-                                // TODO log to console
-                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                            }
-                        });
-                        return null;
-                    };
-
-                    if (image.getLink() == null) { // uploaded image
-                        callback.call(null);
-                    } else {
-                        lockScreen();
-                        new Thread(() -> {
-                            try {
-                                ImgurClient.ImgurV3Image.execute(ImgurClient.ImgurV3ImageRequest.DELETE, image, null, callback);
-                            } catch (IOException ex) {
-                                // TODO log to console
-                                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                            } finally {
-                                unlockScreen();
-                            }
-                        }).start();
-                    }
-
+                if (event.getCode() == KeyCode.DELETE) {
+                    doDeleteImage(image);
                 }
             });
+            imageTable.setContextMenu(getImageTableMenu());
+//            imageTable.setOnContextMenuRequested((ContextMenuEvent event) -> {
+//                getImageTableMenu().show(imageTable, event.getScreenX()+10, event.getScreenY());
+//            });
         }
         return imageTable;
+    }
+    
+    private void doCopyToClipboard(ImageEN image) {
+        final Clipboard clipboard = Clipboard.getSystemClipboard();
+        final ClipboardContent content = new ClipboardContent();
+        content.put(DataFormat.PLAIN_TEXT, image.getLink());
+        clipboard.setContent(content);
+    }
+    
+    private void doDeleteImage(final ImageEN image) {
+        if(FxDialogs.showConfirmDialog(this, "Delete Image", "Do you want to delete this image?").equals(FxDialogs.YES)) {
+            Callback<Basic, Void> callback = (Basic param) -> {
+                Platform.runLater(() -> {
+                    try {
+                        Files.delete(Paths.get(Locations.image(image.getFilename())));
+                        Files.delete(Paths.get(Locations.thumbnail(image.getFilename())));
+                        getImageTable().getSelectionModel().clearSelection();
+                        getImageTable().getItems().remove(image);
+                        ImageEN.dao.delete(image);
+                        
+                        getImageTable().getColumns().get(0).setVisible(false);
+                        getImageTable().getColumns().get(0).setVisible(true);
+                        getImageTable().requestLayout();
+                    } catch (SQLException | IOException ex) {
+                        // TODO log to console
+                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                });
+                return null;
+            };
+
+            if (image.getLink() == null) { // uploaded image
+                callback.call(null);
+            } else {
+                lockScreen();
+                new Thread(() -> {
+                    try {
+                        ImgurClient.ImgurV3Image.execute(ImgurClient.ImgurV3ImageRequest.DELETE, image, null, callback);
+                    } catch (IOException ex) {
+                        // TODO log to console
+                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                    } finally {
+                        unlockScreen();
+                    }
+                }).start();
+            }
+        }
     }
 
     /**
@@ -586,12 +620,19 @@ public final class MainWindow extends BaseWindow {
                     Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
                 }
             });
-
-            CustomMenuItem cboxMenuItem = new CustomMenuItem(getCheckBoxOpenLink(), false);
-            cboxMenuItem.setOnAction((ActionEvent event) -> {
-                Arrays.toString(cboxMenuItem.getStyleClass().toArray());
+            
+            MenuItem openInFolder = new MenuItem("Open images folder");
+            openInFolder.setOnAction((ActionEvent event) -> {
+                try {
+//                    ImageEN image = getImageTable().getSelectionModel().getSelectedItem();
+                    File file = new File(Locations.image(""));
+                    Desktop.getDesktop().open(file);
+                } catch (IOException ex) {
+                    Logger.getLogger(MainWindow.class.getName()).log(Level.SEVERE, null, ex);
+                }
             });
-            final ContextMenu contextMenu = new ContextMenu(new CustomMenuItem(getCheckBoxOpenLink(), false), browser, logoutMenu);
+
+            final ContextMenu contextMenu = new ContextMenu(/*new CustomMenuItem(getCheckBoxOpenLink(), false), */openInFolder, browser, logoutMenu);
             contextMenu.getStyleClass().add("context-menu-user");
 
             this.getScene().addEventFilter(MouseEvent.MOUSE_MOVED, (MouseEvent event) -> {
@@ -645,36 +686,59 @@ public final class MainWindow extends BaseWindow {
                     return;
                 }
 
-                lockScreen();
-
-                new Thread(() -> {
-                    try {
-                        ImgurClient.ImgurV3Image.execute(ImgurClient.ImgurV3ImageRequest.UPLOAD, image, null, (Basic param) -> {
-                            Platform.runLater(() -> {
-                                if (param.getSuccess()) {
-                                    // Print info to console
-                                    //Dialogs.create().lightweight().styleClass(Dialog.STYLE_CLASS_CROSS_PLATFORM).title("Upload").masthead("Your image has been uploaded.").showInformation();
-                                } else {
-                                    FxDialogs.showErrorDialog("There was a problem uploading your image, please try again.");
-                                }
-                                getImageTable().getColumns().get(0).setVisible(false);
-                                getImageTable().getColumns().get(0).setVisible(true);
-                                updateUploadButton();
-                            });
-                            return null;
-                        });
-                    } catch (IOException ex) {
-                        Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-                        Platform.runLater(() -> {
-                            FxDialogs.showErrorDialog(ex.getMessage());
-                        });
-                    } finally {
-                        unlockScreen();
-                    }
-                }).start();
+                doImageUpload(image);
             });
         }
         return uploadButton;
+    }
+
+    public ContextMenu getImageTableMenu() {
+        if(imageTableMenu == null) {
+            MenuItem copyURL = new MenuItem("Copy URL");
+            copyURL.setOnAction((ActionEvent event) -> {
+                doCopyToClipboard(getImageTable().getSelectionModel().getSelectedItem());
+            });
+            MenuItem delete = new MenuItem("Delete Image");
+            delete.setOnAction((ActionEvent event) -> {
+                doDeleteImage(getImageTable().getSelectionModel().getSelectedItem());
+            });
+            imageTableMenu = new ContextMenu(copyURL, delete);
+            imageTableMenu.getStyleClass().add("context-menu-user");
+            imageTableMenu.setOnShowing((WindowEvent event) -> {
+                ImageEN image = getImageTable().getSelectionModel().getSelectedItem();
+                copyURL.setDisable(image.getLink() == null);
+            });
+        }
+        return imageTableMenu;
+    }
+    
+    private void doImageUpload(ImageEN image) {
+        lockScreen();
+        new Thread(() -> {
+            try {
+                ImgurClient.ImgurV3Image.execute(ImgurClient.ImgurV3ImageRequest.UPLOAD, image, null, (Basic param) -> {
+                    Platform.runLater(() -> {
+                        if (param.getSuccess()) {
+                            // Print info to console
+                            //Dialogs.create().lightweight().styleClass(Dialog.STYLE_CLASS_CROSS_PLATFORM).title("Upload").masthead("Your image has been uploaded.").showInformation();
+                        } else {
+                            FxDialogs.showErrorDialog("There was a problem uploading your image, please try again.");
+                        }
+                        getImageTable().getColumns().get(0).setVisible(false);
+                        getImageTable().getColumns().get(0).setVisible(true);
+                        updateUploadButton();
+                    });
+                    return null;
+                });
+            } catch (IOException ex) {
+                Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+                Platform.runLater(() -> {
+                    FxDialogs.showErrorDialog(ex.getMessage());
+                });
+            } finally {
+                unlockScreen();
+            }
+        }).start();
     }
 
     /**
@@ -782,6 +846,9 @@ public final class MainWindow extends BaseWindow {
                         //System.out.println("Screen Printed!");
                         try {
                             ImageEN image = ImageEN.createImage(Functions.getScreenBufferedImage(), "png");
+                            if(getAutoUploadToggle().getSwitch().isSelected()) {
+                                doImageUpload(image);
+                            }
                             getImageTable().getItems().add(0, image);
                         } catch (AWTException | IOException | SQLException ex) {
                             String msg = "There was a problem saving the screenshot.";

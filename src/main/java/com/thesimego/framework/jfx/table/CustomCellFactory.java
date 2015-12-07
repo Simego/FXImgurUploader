@@ -1,7 +1,6 @@
 package com.thesimego.framework.jfx.table;
 
 import com.thesimego.framework.jfx.builder.TextFieldBuilder;
-import com.thesimego.framework.jfx.entity.GenericEN;
 import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
@@ -110,7 +109,7 @@ public class CustomCellFactory {
                 public void updateItem(final O item, boolean empty) {
                     if (empty) {
                         setText(null);
-                        setGraphic(textField);
+                        setGraphic(null);
                     } else {
                         if (isEditing()) {
                             setContentDisplay(ContentDisplay.GRAPHIC_ONLY);

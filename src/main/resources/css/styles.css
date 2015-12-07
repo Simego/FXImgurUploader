@@ -2,11 +2,13 @@
 * {
     -imgur-color-bg-1: #121211;
     -imgur-color-bg-2: #2b2b2b;
+    
     -imgur-color-hover: #444442;
+    
     -imgur-default-green: rgb(133, 191, 37);
-    /*-imgur-default-green-opacity: rgba(133, 191, 37, 0.5);*/
+    -imgur-default-blue: rgb(50, 116, 229);
+    
     -imgur-default-text-color: rgb(242, 242, 242);
-    -imgur-default-blue: #3274e5;
     -toolbar-color-2: #404040;
     -imgur-focus-border-gold: #665d32;
     -fx-font-family: "Arial, sans-serif";
@@ -37,7 +39,7 @@
 
 .main-borderpane {
     -fx-background-color: -imgur-color-bg-1;
-    -fx-background-radius: 10;
+    -fx-background-radius: 10px;
 }
 .center-pane {
     -fx-padding: 20px;
@@ -136,6 +138,16 @@
 .toolbar-button-transparent.stop:armed Text {
     -fx-effect: dropshadow(gaussian, rgba(204,0,0,0.8), 5, 0.5, 0, 0) !important;
 }
+
+.toolbar-button-custom {
+    -fx-cursor: hand;
+    -fx-background-color: transparent;
+    -fx-pref-height: 60;
+    -fx-min-height: 60;
+}
+/*.toolbar-button-custom:hover {
+    -fx-background-color: -imgur-color-hover;
+}*/
 
 
 
@@ -509,4 +521,88 @@
 
 .alert.warning.dialog-pane {
     /*-fx-graphic: url("dialog-warning.png");*/
+}
+
+
+/*******************************************************************************
+ *                                                                             *
+ * Progress Bar                                                                *
+ *                                                                             *
+ ******************************************************************************/
+.progress-bar {
+    /*-fx-background-color: transparent !important;*/
+}
+
+.progress-bar,
+.progress-bar > .track,
+.progress-bar > .bar,
+.progress-bar:indeterminate > .bar {
+    -fx-border-radius: 5, 5, 5 !important;
+    -fx-background-radius: 10, 10, 10 !important;
+}
+.progress-bar > .bar,
+.progress-bar:indeterminate > .bar{
+    -fx-background-color: linear-gradient(rgb(116, 178, 14) 0px, rgb(91, 140, 11) 100%);
+    -fx-border-color: rgb(166, 238, 50) rgb(66, 102, 8) rgb(66, 102, 8) rgba(0, 0, 0, 0) !important;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * ToggleSwitch                                                                *
+ *                                                                             *
+ ******************************************************************************/
+.toggle-switch .text {
+    -fx-font-size: 1em;
+    -fx-text-fill: -fx-text-base-color;
+}
+
+.toggle-switch .thumb {
+    -fx-background-color:
+        linear-gradient(to bottom, derive(-imgur-default-green, -20%), derive(-imgur-default-green, -30%)),
+        derive(-imgur-default-green, -40%),
+        radial-gradient(center 50% 50%, radius 80%, derive(-imgur-default-green, 20%), derive(-imgur-default-green, -30%));
+    -fx-background-insets: 0, 1, 2;
+
+    /*-fx-background-color: -fx-shadow-highlight-color, -fx-outer-border, -fx-body-color;*/
+    /*-fx-background-insets: 0 0 -1 0, 0, 1;*/
+    -fx-background-radius: 1.0em; /* large value to make sure this remains circular */
+    -fx-padding: 0.75em;
+    -fx-alignment: CENTER;
+    -fx-content-display: LEFT;
+}
+
+.toggle-switch .thumb-area {
+    -fx-background-radius: 1em;
+    -fx-background-color: linear-gradient(to bottom, derive(-fx-text-box-border, -20%), derive(-fx-text-box-border, -30%)), #f5f5f5;
+    -fx-background-insets: 0, 1;
+}
+
+/*.toggle-switch:hover .thumb-area{*/
+/*-fx-background-color: -fx-outer-border, white;*/
+/*}*/
+
+/*.toggle-switch:selected:hover .thumb-area{*/
+/*-fx-background-color: -fx-outer-border, #4fabff;*/
+/*}*/
+
+.toggle-switch:hover .thumb {
+    -fx-color: -fx-hover-base
+}
+
+.toggle-switch:selected .thumb-area {
+    -fx-background-color: linear-gradient(to bottom, derive(-imgur-default-green, -20%), derive(-imgur-default-green, -30%)), linear-gradient(to bottom, derive(-imgur-default-green, 30%), -imgur-default-green) ;
+    -fx-background-insets: 0, 1;
+}
+
+/*.toggle-switch:pressed .thumb-area, .toggle-switch:selected:pressed .thumb-area{*/
+/*-fx-background-insets: 0, 1;*/
+/*-fx-background-color: -fx-outer-border, #666666;*/
+/*}*/
+
+.toggle-switch .thumb-area {
+    -fx-padding: 0.75em 1.333333em 0.75em 1.333333em; /* 7 16 7 16 */
+}
+
+.toggle-switch:disabled {
+    -fx-opacity: 0.4;
 }
