@@ -14,7 +14,8 @@ The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** bu
 * PrintScreen binding to save screenshots.
 * Give a description (title) to images you're about to upload or just to keep track.
 * Drag and Drop URLs or Images to import to the ImgurUploader (to just save or upload).
-* Images can be deleted from the table pressing DELETE on the keyboard (with confirmation).
+* Images can be deleted from the table pressing DELETE on the keyboard or right-clicking (with confirmation).
+* Open images with double click and get image URL right-clicking.
 
 # Preview
 ![](http://i.imgur.com/PeyesgA.png)
