@@ -3,7 +3,7 @@
 The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** but is a little faster, a lot better and much prettier, many improvements to be made since it's not finished and code to be rewritten.
 
 * **Java 8 needed**: https://www.java.com/download
-* **Latest Release**: [ImgurUploader Beta v0.4.0](https://github.com/Simego/FXImgurUploader/releases/tag/v0.4.0-beta)
+* **Latest Release**: [ImgurUploader Beta v0.5.0](https://github.com/Simego/FXImgurUploader/releases/tag/v0.5.0-beta)
 
 * **Please report issues and improvements/ideas in the [> Issues <](https://github.com/Simego/FXImgurUploader/issues) section, thanks!!**
 
@@ -21,6 +21,10 @@ The new **ImgurUploader** is made with **JavaFX** (no swing), uses **Java 8** bu
 ![](http://i.imgur.com/66UyHTI.png)
 
 ### Changelog
+#### v0.5.0
+* Option to open images folder.
+* Delete or get Image Links right-clicking on image row.
+
 #### v0.4.0
 * Native Dialogs from JavaFX 8.4+ (fixes for Java 8.6).
 * Dialogs have a nicer look now (imgur-like style).
